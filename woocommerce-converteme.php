@@ -121,23 +121,11 @@
                 do_action( 'woocommerce_credit_card_form_start', $this->id );
 
                 // I recommend to use inique IDs, because other gateways could already use #ccNo, #expdate, #cvc
-                echo '<div class="form-row form-row-wide"><label>Card Number <span class="required">*</span></label>
-		<input id="misha_ccNo" type="text" autocomplete="off">
-		</div>
-		<div class="form-row form-row-first">
-			<label>Expiry Date <span class="required">*</span></label>
-			<input id="misha_expdate" type="text" autocomplete="off" placeholder="MM / YY">
-		</div>
-		<div class="form-row form-row-last">
-			<label>Card Code (CVC) <span class="required">*</span></label>
-			<input id="misha_cvv" type="password" autocomplete="off" placeholder="CVC">
-		</div>
-		<div class="clear"></div>';
-
+//                $html = file_get_contents(__FILE__ . 'public/template/methods.html');
+//                echo $html;
                 do_action( 'woocommerce_credit_card_form_end', $this->id );
 
                 echo '<div class="clear"></div></fieldset>';
-
             }
 
             public function payment_scripts()

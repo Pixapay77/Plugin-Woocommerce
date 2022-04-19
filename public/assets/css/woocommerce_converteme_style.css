@@ -1,0 +1,97 @@
+.tabs {
+    background: #fff;
+    position: relative;
+    margin-bottom: 50px;
+}
+
+.tabs > input,
+.tabs > span {
+    width: 20%;
+    height: 60px;
+    line-height: 60px;
+    position: absolute;
+    top: 0;
+}
+
+.tabs > input {
+    cursor: pointer;
+    filter: alpha(opacity=0);
+    opacity: 0;
+    position: absolute;
+    z-index: 99;
+}
+
+.tabs > span {
+    background: #f0f0f0;
+    text-align: center;
+    overflow: hidden;
+}
+
+.tabs > span i,
+.tabs > span {
+    -webkit-transition: all .5s;
+    -moz-transition: all .5s;
+    -o-transition: all .5s;
+    transition: all .5s;
+}
+
+.tabs > input:hover + span {
+    background: rgba(255,255,255,.1);
+}
+
+.tabs > input:checked + span {
+    background: #fff;
+}
+
+.tabs > input:checked + span,
+.tabs > input:hover + span {
+    color: #3498DB;
+}
+
+#tab-1, #tab-1 + span {
+    left: 0;
+}
+
+#tab-2, #tab-2 + span {
+    left: 20%;
+}
+
+#tab-3, #tab-3 + span {
+    left: 40%;
+}
+.tab-content {
+    padding: 80px 20px 20px;
+    width: 100%;
+    min-height: 340px;
+}
+
+.tab-content section {
+    width: 100%;
+    display: none;
+}
+#tab-1:checked ~ .tab-content #tab-item-1  {
+    display: block;
+}
+
+#tab-2:checked ~ .tab-content #tab-item-2  {
+    display: block;
+}
+
+#tab-3:checked ~ .tab-content #tab-item-3  {
+    display: block;
+}
+
+.effect-1 > input:checked + span {
+    background: #fff;
+}
+#tab-1:checked ~ .line {
+    left: 0;
+}
+
+#tab-2:checked ~ .line {
+    left: 20%;
+}
+
+#tab-3:checked ~ .line {
+    left: 40%;
+}
