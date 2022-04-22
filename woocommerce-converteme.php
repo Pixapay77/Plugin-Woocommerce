@@ -1,6 +1,6 @@
 <?php
     /*
-    Plugin Name: Converteme Checkout
+    Plugin Name: Woocommerce Converteme
     Plugin URI: https://converte.me/plugin/converteme-checkout
     Description: Descricao provisoria Converteme Checkout.
     Author: Converte
@@ -51,7 +51,7 @@
 //                add_action( 'wp_enqueue_scripts', array( $this, 'payment_scripts' ) );
 
                 // You can also register a webhook here
-                // add_action( 'woocommerce_api_{webhook name}', array( $this, 'webhook' ) );
+                 add_action( 'woocommerce_api_pagamento', array( $this, 'webhook' ) );
             }
 
             public function init_form_fields()
@@ -125,7 +125,7 @@
                 do_action( 'woocommerce_credit_card_form_start', $this->id );
 
                 // I recommend to use inique IDs, because other gateways could already use #ccNo, #expdate, #cvc
-                echo file_get_contents(plugin_dir_url(__FILE__) . 'public/template/methods.html');
+                include_once plugin_dir_path(__FILE__) . 'public/template/methods.html';
 
                 do_action( 'woocommerce_credit_card_form_end', $this->id );
 
@@ -186,14 +186,18 @@
                   * Array with parameters for API interaction
                  */
 
+                if(($order->get_total() / $_POST[ 'installments' ]) < 5) {
+                    wc_add_notice(  'Valor minimo por parcela e R$ 5,00', 'error' );
+                    return false;
+                }
+
+
                 $args = $this->Payload($order,$_POST);
 
                 /*
                  * Your API interaction could be built with wp_remote_post()
                   */
 
-                echo $args;
-                exit();
                 $response = wp_remote_post( $this->Endpoint, array(
                     'body' => $args,
                     'headers' => array(
@@ -202,21 +206,12 @@
                     )
                 ));
 
-                $returnError = json_decode($response['body']);
+                $body = json_decode( $response['body'], true );
 
-                if( !is_wp_error( $response ) && !isset($returnError->statusCode)) {
 
-                    $body = json_decode( $response['body'], true );
-
+                if( !is_wp_error( $response ) && $response['response']['code'] == 200) {
                     // it could be different depending on your payment processor
                     if ( isset($body['tid']) && $body['tid'] != '' ) {
-
-                        // we received the payment
-                        $order->payment_complete();
-                        $order->reduce_order_stock();
-
-                        // some notes to customer (replace true with false to make it private)
-                        $order->add_order_note( 'Hey, your order is paid! Thank you!', true );
 
                         // Empty cart
                         $woocommerce->cart->empty_cart();
@@ -233,7 +228,7 @@
                     }
 
                 } else {
-                    wc_add_notice(  $returnError->errors[0], 'error' );
+                    wc_add_notice(  $response['response']['message'] .':'. $body["errors"][0]["messages"] , 'error' );
                     return;
                 }
             }
@@ -247,7 +242,7 @@
                     $items[] = [
                         "id"=> (string) $item->get_product_id(),
                         "title"=> $item->get_name(),
-                        "unit_price"=> (float) $item->get_total(),
+                        "unit_price"=> (int) $item->get_total() * 100,
                         "quantity"=> $item->get_quantity(),
                         "tangible"=> true
                     ];
@@ -255,10 +250,10 @@
 
                 $payload = [
                     "place"           => $order->ID,
-                    "cart_amount"     => (float) $order->get_subtotal(),
-                    "total_amount"    => (float) $order->get_total(),
-                    "shipment_amount" => (int) $order->get_shipping_total(),
-                    "installments"    => 1,
+                    "cart_amount"     => (int) $order->get_subtotal() * 100,
+                    "total_amount"    => (int) $order->get_total() * 100,
+                    "shipment_amount" => (int) $order->get_shipping_total() * 100,
+                    "installments"    => (int) $installments,
                     "soft_descriptor" => get_bloginfo( 'name' ),
                     "customer"        => [
                         "name"     => $order->get_billing_first_name(),
@@ -385,6 +380,7 @@
 
             public function webhook()
             {
+                
             }
         }
     }
