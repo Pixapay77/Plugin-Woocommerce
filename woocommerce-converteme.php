@@ -380,7 +380,19 @@
 
             public function webhook()
             {
-                
+                $data = json_decode(file_get_contents('php://input'), true);
+                $order = wc_get_order( $data["resource"]['reference_id'] );
+
+                if($data["resource"]['status'] == 'paid'){
+                    $order->payment_complete();
+                    $order->reduce_order_stock();
+
+                    // some notes to customer (replace true with false to make it private)
+                    $order->add_order_note( 'Pagamento feito por ' . $data["resource"]['payment_method']['type'], true );
+                }elseif($data["resource"]['status'] == 'waiting_payment'){
+                    // some notes to customer (replace true with false to make it private)
+                    $order->add_order_note( 'Pagamento feito por ' . $data["resource"]['payment_method']['type'] . ' ' . $data["resource"]['link'], true );
+                }
             }
         }
     }
