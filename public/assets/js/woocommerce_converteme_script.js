@@ -279,13 +279,45 @@ setTimeout(function(){
 
     jQuery('.tabset label').click(function(){
         var id = jQuery(this).attr('for');
-        var method = jQuery('#' + id).val();
+        var method = jQuery('input#' + id).val();
 
         jQuery('input[name="brand"]').val('');
+        jQuery('input[name="brand"]').val(method)
 
-        if(method != 'credit_card'){
-            jQuery('input[name="brand"]').val(method)
+        jQuery('.tab-panel').hide();
+        jQuery('.tab-panel').removeAttr('style');
+
+        if(id == 'tab1'){
+            jQuery('#marzen').show();
         }
-        console.log(method);
+        if(id == 'tab2'){
+            jQuery('#rauchbier').show();
+        }
+        if(id == 'tab3'){
+            jQuery('#dunkles').show();
+        }
+
     });
+
+    jQuery('#woocommercerConverteme fieldset p').click(function(event){
+        event.preventDefault();
+        var type = this.dataset.type;
+
+        jQuery('#woocommercerConverteme fieldset p').removeClass('active');
+        jQuery('#woocommercerConverteme fieldset').removeAttr('style');
+        jQuery('#woocommercerConverteme fieldset .content').hide();
+        jQuery(this).addClass('active');
+        jQuery('#woocommercerConverteme fieldset.'+type+' .content').show();
+
+        jQuery('#woocommercerConverteme fieldset').removeClass('magin-bottom29');
+        jQuery('#woocommercerConverteme fieldset.' + type).addClass('magin-bottom29');
+
+
+        if(type != 'cred_card'){
+            jQuery('#woocommercerConverteme .field-container input#brand').val(type)
+        }else{
+            jQuery('#woocommercerConverteme .field-container input#brand').val('')
+        }
+
+    })
 },3000);

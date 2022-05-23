@@ -6,7 +6,9 @@
             "email": "converteme@converte.me"
         }
     ],
-    "require": {},
+    "require": {
+        "chillerlan/php-qrcode": "^4.3"
+    },
     "autoload": {
         "psr-4": {
             "App\\": "src/App"

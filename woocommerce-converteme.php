@@ -8,19 +8,33 @@
     Author URI:
     */
 
+    require_once 'vendor/autoload.php';
+    use chillerlan\QRCode\QRCode;
+
+    define('path_plugin',ABSPATH . 'wp-content/plugins/woocommerce-converteme/');
+
+    require_once ABSPATH ."/wp-load.php";
+    include_once WP_PLUGIN_DIR .'/woocommerce/woocommerce.php';
+    require_once __DIR__ . '/includes/PathTemplate.php';
+    require_once __DIR__ . '/includes/scripts.php';
+    require_once __DIR__ . '/includes/ajax.php';
+    require_once __DIR__ . '/hooks/cart.php';
 
     add_action( 'plugins_loaded', 'Converteme_init' );
     function Converteme_init()
     {
+
         class WC_Converteme_Gateway extends WC_Payment_Gateway
         {
+            public $TypePayment;
+
             public function __construct()
             {
                 $this->id = 'converteme'; // payment gateway plugin ID
                 $this->icon = ''; // URL of the icon that will be displayed on checkout page near your gateway name
                 $this->has_fields = true; // in case you need a custom credit card form
                 $this->method_title = 'Converteme Gateway';
-                $this->method_description = 'Descricao do servico de pagamento'; // will be displayed on the options page
+                $this->method_description = ''; // will be displayed on the options page
 
                 // gateways can support subscriptions, refunds, saved payment methods,
                 // but in this tutorial we begin with simple payments
@@ -45,6 +59,10 @@
                 // This action hook saves the settings
                 add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
                 add_action( 'woocommerce_checkout_fields', array( $this, 'checkout_billing_fields' ), 9999 );
+
+                add_action( 'woocommerce_before_thankyou', array($this,'dados_pagamento'));
+
+                add_action( 'woocommerce_admin_order_data_after_billing_address', array($this,'order_cpf_backend'));
 
 
                 // We need custom JavaScript to obtain a token
@@ -103,7 +121,6 @@
                     )
                 );
             }
-
             public function payment_fields()
             {
 
@@ -111,7 +128,7 @@
                 if ( $this->description ) {
                     // you can instructions for test mode, I mean test card numbers etc.
                     if ( $this->testmode ) {
-                        $this->description .= ' TEST MODE ENABLED. In test mode, you can use the card numbers listed in <a href="#">documentation</a>.';
+                        $this->description .= '';
                         $this->description  = trim( $this->description );
                     }
                     // display the description with <p> tags etc.
@@ -119,7 +136,7 @@
                 }
 
                 // I will echo() the form, but you can close PHP tags and print it directly in HTML
-                echo '<fieldset id="wc-' . esc_attr( $this->id ) . '-cc-form" class="wc-credit-card-form wc-payment-form" style="background:transparent;">';
+                echo '<div id="wc-' . esc_attr( $this->id ) . '-cc-form" class="wc-credit-card-form wc-payment-form" style="background:transparent;">';
 
                 // Add this action hook if you want your custom payment gateway to support it
                 do_action( 'woocommerce_credit_card_form_start', $this->id );
@@ -129,9 +146,8 @@
 
                 do_action( 'woocommerce_credit_card_form_end', $this->id );
 
-                echo '<div class="clear"></div></fieldset>';
+                echo '<div class="clear"></div></div>';
             }
-
             public function payment_scripts()
             {
                 // we need JavaScript to process a token only on cart/checkout pages, right?
@@ -156,7 +172,6 @@
                 // integracao ----------------------
 
             }
-
             public function validate_fields()
             {
                 if( empty( $_POST[ 'billing_neighborhood' ]) ) {
@@ -173,13 +188,25 @@
                 }
                 return true;
             }
-
+            function order_cpf_backend($order){
+                $order = wc_get_order( $order->ID );
+                $order_data = $order->get_data(); // The Order data
+                $user_id = $order_data['customer_id'];
+                $cpf = get_user_meta($user_id,'billing_cpf',true);
+                echo "<p><strong>CPF:</strong> {$cpf}</p>";
+            }
             public function process_payment( $order_id )
             {
                 global $woocommerce;
 
+
                 // we need it to get any order detailes
                 $order = wc_get_order( $order_id );
+                $order_data = $order->get_data(); // The Order data
+                $user_id = $order_data['customer_id'];
+
+                update_user_meta( $user_id, 'billing_cpf', $_POST['billing_cpf'] );
+
 
 
                 /*
@@ -194,6 +221,7 @@
 
                 $args = $this->Payload($order,$_POST);
 
+
                 /*
                  * Your API interaction could be built with wp_remote_post()
                   */
@@ -206,10 +234,10 @@
                     )
                 ));
 
+
                 $body = json_decode( $response['body'], true );
 
-
-                if( !is_wp_error( $response ) && $response['response']['code'] == 200) {
+                if( !is_wp_error( $response ) && $response["response"]["code"] == 200) {
                     // it could be different depending on your payment processor
                     if ( isset($body['tid']) && $body['tid'] != '' ) {
 
@@ -217,6 +245,18 @@
                         $woocommerce->cart->empty_cart();
 
                         // Redirect to the thank you page
+                        $this->TypePayment = $body["payment_method"];
+
+                        update_post_meta($order_id,'_converteme_payment_type',$this->TypePayment);
+                        if($this->TypePayment == 'boleto'){
+                            update_post_meta($order_id,'_converteme_boleto_barcode',$body["boleto_barcode"]);
+                            update_post_meta($order_id,'_converteme_boleto_expiration_date',$body["boleto_expiration_date"]);
+                            update_post_meta($order_id,'_converteme_boleto_boleto_url',$body["boleto_url"]);
+                        }elseif($this->TypePayment == 'pix'){
+                            update_post_meta($order_id,'_converteme_pix_qr_code',$body["pix_qr_code"]);
+                            update_post_meta($order_id,'_converteme_pix_expiration_date',$body["pix_expiration_date"]);
+                        }
+
                         return array(
                             'result' => 'success',
                             'redirect' => $this->get_return_url( $order )
@@ -227,12 +267,14 @@
                         return;
                     }
 
+                }elseif($body["statusCode"] == 400){
+                    $msg = (is_array($body["errors"][0])) ? $body["errors"][0]['messages'] : $body["errors"][0];
+                    wc_add_notice(  $body['statusText'] .': '. $msg , 'error' );
                 } else {
-                    wc_add_notice(  $response['response']['message'] .':'. $body["errors"][0]["messages"] , 'error' );
-                    return;
+                    $msg = (is_array($body["errors"][0])) ? $body["errors"][0]['messages'] : $body["errors"][0];
+                    wc_add_notice(  $body['statusText'] .': '. $msg , 'error' );
                 }
             }
-
             public function Payload($order,$dados)
             {
                 extract($dados);
@@ -247,6 +289,8 @@
                         "tangible"=> true
                     ];
                 }
+
+                $metodo = (in_array($brand,['pix','boleto'])) ? $brand : 'credit_card';
 
                 $payload = [
                     "place"           => $order->ID,
@@ -318,7 +362,6 @@
 
                 return json_encode($payload);
             }
-
             public function  Datedue(){
                 $novadata = explode("/",date('d/m/Y'));
                 $dia = $novadata[0];
@@ -327,7 +370,6 @@
 
                 return date('Y-m-d',mktime(0,0,0,$mes,$dia+5,$ano));
             }
-
             public function Token()
             {
                 $hash = base64_encode($this->clientid .':'. $this->clientsecret);
@@ -338,7 +380,6 @@
                 ]);
                 return json_decode($response['body'])->accessToken;
             }
-
             public function checkout_billing_fields( $fields )
             {
                 if ( !isset(  $fields['billing']['billing_neighborhood'] ) ) {
@@ -377,10 +418,120 @@
 
                 return $fields;
             }
-
             public function webhook()
             {
-                
+                $data = json_decode(file_get_contents('php://input'), true);
+                $this->OrderReturn((object) $data);
+                exit();
+            }
+            public function OrderReturn($data)
+            {
+                $transition     = $data->resource['id'];
+                $status         = $data->resource['status'];
+                $order_id       = $data->resource['reference_id'];
+                $payment_method = $data->resource['payment_method']['type'];
+                $link_boleto    = $data->resource['link'];
+
+                $order = wc_get_order( $order_id );
+
+                $description = ($payment_method == "BOLETO") ? $payment_method . " Link <a target='_blanck' href='".$link_boleto."'>" . $link_boleto . '</a>' : $payment_method;
+
+                if($status == 'paid'){
+                    $order->payment_complete();
+                    $order->reduce_order_stock();
+                    // some notes to customer (replace true with false to make it private)
+                    $order->add_order_note( 'Pagamento confirmado por ' . $payment_method, true );
+                }elseif($status == 'waiting_payment'){
+                    // some notes to customer (replace true with false to make it private)
+                    $order->add_order_note( 'Aguardando pagamento por ' . $description, true );
+                }
+            }
+            public function dados_pagamento($order_id) {
+                        $code   = get_post_meta($order_id,'_converteme_pix_qr_code',true);
+                        if($code != '')
+                            $base64 = (new QRCode)->render($code);
+                        $pix = '
+                            <td class="woocommerce-table__product-name product-name" style="text-align: center">
+                                <div id="converteme-pix">
+                                Utilize o QRCode e pague o PIX pelo celular
+                                    <img src="'.$base64.'" />
+                                </div>
+                            </td>
+                            <td class="woocommerce-table__product-name product-name" style="text-align: center">
+                                <div id="converteme-pix-codigo">
+                                    <label>Código de pagamento</label><br>
+                                    <input type="text" id="codepix" value="'.get_post_meta($order_id,'_converteme_pix_qr_code',true).'">
+                                    <br><span>Copiar código</span>
+                                 </div>
+                            </td>
+                            <td class="woocommerce-table__product-name product-name" style="text-align: center">
+                                Vencimento
+                                '.get_post_meta($order_id,'_converteme_pix_expiration_date',true).'
+                            </td>
+                        ';
+
+                        $boleto = '
+                            <td colspan="2" class="woocommerce-table__product-name product-name" style="text-align: center">
+                                <div id="converteme-pix-codigo">
+                                    <label>Boleto</label><br>
+                                    <a target="_blank" href="'.get_post_meta($order_id,'_converteme_boleto_boleto_url',true).'">Abrir boleto</a>
+                                 </div>
+                            </td>
+                            <td class="woocommerce-table__product-name product-name" style="text-align: center">
+                                Vencimento<br>
+                                '.get_post_meta($order_id,'_converteme_boleto_expiration_date',true).'
+                            </td>
+                        ';
+
+                        $TypePayment = get_post_meta($order_id,'_converteme_payment_type',true);
+                        $typePayment = ($TypePayment == 'pix') ? $pix : $boleto;
+
+                        $html = '
+                           <p class="woocommerce-notice woocommerce-notice--success woocommerce-thankyou-order-received">Detalhes para pagamento.</p>
+                           <table class="woocommerce-table woocommerce-table--order-details shop_table order_details">
+                                <tr class="woocommerce-table__line-item order_item">
+                                     '.$typePayment.'
+                                </tr>
+                            </table> 
+                            <style>
+                                #converteme-pix{
+                                     width: 203px;
+                                     padding: 15px;
+                                     font-size: 12px;
+                                }
+                                #converteme-boleto{
+                                     width: 203px;
+                                     padding: 15px
+                                }
+                                #converteme-boleto a{
+                                    line-height: 12px;
+                                    white-space: normal;
+                                    font-weight: 700;
+                                    text-align: center;
+                                    text-transform: uppercase;
+                                    font-size: 14px;
+                                    color: #149221;
+                                    background-color: #e5ebe0;
+                                    padding: 6px;
+                                    margin: 7px 0;
+                                }
+                                #converteme-pix .copiar{
+                                    line-height: 12px;
+                                    white-space: normal;
+                                    font-weight: 700;
+                                    text-align: center;
+                                    text-transform: uppercase;
+                                    font-size: 14px;
+                                    color: #149221;
+                                    background-color: #e5ebe0;
+                                    padding: 6px;
+                                    margin: 7px 0;
+                                }
+                            </style>
+
+                    ';
+
+                echo $html;
             }
         }
     }
@@ -399,12 +550,21 @@
         wp_enqueue_script('woocommerce_converteme_script',plugin_dir_url(__FILE__) . 'public/assets/js/woocommerce_converteme_script.js',['jquery'],false,false);
     }
 
+if ( ! function_exists( 'woocommerce_order_review' ) ) {
 
-//    add_action('wp_footer','script_function');
-//    function script_function()
-//    {
-//        echo "<script>";
-//        echo file_get_contents(plugin_dir_url(__FILE__) . 'public/assets/js/woocommerce_converteme_script.js');
-//        echo "</script>";
-//
-//    }
+    /**
+     * Output the Order review table for the checkout.
+     *
+     * @param bool $deprecated Deprecated param.
+     */
+    function woocommerce_order_review( $deprecated = false ) {
+        wc_get_template(
+            'checkout/review-order.php',
+            array(
+                'checkout' => WC()->checkout(),
+            )
+        );
+    }
+}
+
+

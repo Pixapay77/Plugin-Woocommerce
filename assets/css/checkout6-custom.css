@@ -1,0 +1,385 @@
+@import url("/wp-content/plugins/seomidia-checkout-custom/assets/css/redensign-checkout.css");
+@import url("https://fonts.googleapis.com/css?family=Roboto");
+@import url("https://fonts.googleapis.com/css?family=Ubuntu");
+@import url("https://fonts.googleapis.com/css?family=Open+Sans");
+
+.body-cart table.table.cart-items .seller-vale-success,
+.body-cart table.table.cart-items .seller-vale-danger {
+  display: none
+}
+
+.shp-pickup-receiver {
+  display: block
+}
+
+/* Escondendo botÃ£o Visa Checkout */
+.extensions-checkout-buttons-container.row-fluid {
+  display: none !important;
+}
+
+@media (min-width: 768px) {
+.body-cart .cart-template div.cart-more-options::after {
+    content: 'O prazo de entrega passa a contar apÃ³s o status de pagamento aprovado';
+    font-size: .8125rem;
+    color: #444;
+    font-weight: 400;
+	width: 60%;
+    display: flex;
+    transform: translate(0, 50px);
+    line-height: 1;	
+  }
+}
+
+@media (max-width: 768px) {
+  html {
+    overflow: initial;
+    height: auto
+  }
+  
+  .body-cart .cart-template div.cart-more-options::after {
+  content: 'O prazo de entrega passa a contar apÃ³s o status de pagamento aprovado';
+    width: 100%;
+    display: flex;
+    transform: translate(0, 50px);
+  }
+}
+
+.body-cart .cart-template .cart-more-options {
+  width: 100%;
+  padding: 0;
+  margin: 0;
+}
+
+.body-order-form .orderform-template .orderform-template-holder #shipping-data #postalCode-finished-loading .vtex-omnishipping-1-x-deliveryChannelsWrapper {
+  background: #F0F0F0;
+  border-radius: 25.5px
+}
+
+.body-order-form .orderform-template .orderform-template-holder #shipping-data #postalCode-finished-loading .vtex-omnishipping-1-x-deliveryChannelsWrapper .vtex-omnishipping-1-x-deliveryChannelsToggle {
+  background: #213A79;
+  border: 1px solid #213A79;
+  font-family: Roboto;
+  font-style: normal;
+  font-weight: normal;
+  line-height: normal;
+  font-size: 18px
+}
+
+.body-order-form .orderform-template .orderform-template-holder #shipping-data #postalCode-finished-loading .vtex-omnishipping-1-x-deliveryChannelsWrapper button .shp-method-option-text {
+  font-family: Roboto;
+  font-style: normal;
+  font-weight: normal;
+  line-height: normal;
+  font-size: 18px;
+  color: #8A8989
+}
+
+.body-order-form .orderform-template .orderform-template-holder #shipping-data #postalCode-finished-loading .vtex-omnishipping-1-x-deliveryChannelsWrapper button.vtex-omnishipping-1-x-deliveryOptionActive .shp-method-option-text {
+  color: #fff
+}
+
+.body-order-form .orderform-template .orderform-template-holder #shipping-data .delivery-group-content .vtex-omnishipping-1-x-findPickup .pickup-point-info .pickup-marker-blue path {
+  fill: #213A79
+}
+
+.body-order-form .orderform-template .orderform-template-holder #shipping-data .delivery-group-content .vtex-omnishipping-1-x-findPickup .pickup-point-info .vtex-omnishipping-1-x-pointWrapper {
+  color: #213A79;
+  font-family: Ubuntu;
+  font-style: normal
+}
+
+.body-order-form .orderform-template .orderform-template-holder #shipping-data .delivery-group-content .vtex-omnishipping-1-x-findPickup .pickup-point-info .vtex-omnishipping-1-x-pointWrapper .vtex-omnishipping-1-x-PickupPointName {
+  font-weight: bold;
+  line-height: 25px;
+  font-size: 20px
+}
+
+.body-order-form .orderform-template .orderform-template-holder #shipping-data .delivery-group-content .vtex-omnishipping-1-x-findPickup .pickup-point-info .vtex-omnishipping-1-x-pointWrapper .pickup-point-address {
+  color: #000
+}
+
+.body-order-form .orderform-template .orderform-template-holder #shipping-data .delivery-group-content .vtex-omnishipping-1-x-findPickup .pickup-point-info .vtex-omnishipping-1-x-pointWrapper .vtex-omnishipping-1-x-details {
+  font-family: Ubuntu;
+  font-style: normal;
+  font-weight: normal;
+  line-height: normal;
+  font-size: 12px;
+  color: #4BB8EF;
+  box-sizing: border-box;
+  padding-top: 10px
+}
+
+.body-order-form .orderform-template .orderform-template-holder #shipping-data .delivery-group-content .vtex-omnishipping-1-x-findPickup .vtex-omnishipping-1-x-pickupPointChange {
+  border: 1px solid #213A79;
+  font-family: Ubuntu;
+  font-style: normal;
+  font-weight: normal;
+  line-height: 18px;
+  font-size: 14px;
+  color: #213A79
+}
+
+.body-order-form .orderform-template .orderform-template-holder #shipping-data .delivery-group-content .vtex-omnishipping-1-x-packages .shp-lean-option {
+  background: #F0F0F0
+}
+
+.body-order-form .orderform-template .orderform-template-holder #shipping-data .delivery-group-content .vtex-omnishipping-1-x-packages .shp-lean-option .vtex-omnishipping-1-x-leanShippingIcon svg path {
+  fill: #213A79
+}
+
+.body-order-form .orderform-template .orderform-template-holder #shipping-data .vtex-omnishipping-1-x-addressFormPart1 .ship-postalCode small a {
+  font-family: Ubuntu;
+  font-style: normal;
+  font-weight: normal;
+  line-height: normal;
+  font-size: 12px;
+  color: #4BB8EF;
+  box-sizing: border-box;
+  padding-top: 10px
+}
+
+.body-order-form .orderform-template .orderform-template-holder #shipping-data .pkpmodal-backdrop {
+  background: #000;
+  opacity: .3
+}
+
+.body-order-form .orderform-template .orderform-template-holder #shipping-data .pkpmodal {
+  z-index: 1000;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  top: 10%;
+  max-height: 80%;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.6)
+}
+
+@media screen and (max-width: 768px) {
+  .body-order-form .orderform-template .orderform-template-holder #shipping-data .pkpmodal {
+    max-width: 90%
+  }
+}
+
+.body-order-form .orderform-template .orderform-template-holder #shipping-data .pkpmodal .pkpmodal-close svg path {
+  fill: #747474
+}
+
+.body-order-form .orderform-template .orderform-template-holder #shipping-data .pkpmodal .pkpmodal-info-bar .pkpmodal-info-bar-container {
+  background: #fff
+}
+
+.body-order-form .orderform-template .orderform-template-holder #shipping-data .pkpmodal .pkpmodal-info-bar .pkpmodal-info-bar-container .pkpmodal-header {
+  margin-bottom: 15px;
+  border-bottom: 1px solid #D5D5D5;
+  padding: 15px
+}
+
+.body-order-form .orderform-template .orderform-template-holder #shipping-data .pkpmodal .pkpmodal-info-bar .pkpmodal-info-bar-container .pkpmodal-header::after {
+  content: 'Selecione a unidade que deseja retirar os produtos que restaram';
+  font-family: 'Open Sans', sans-serif;
+  font-style: normal;
+  font-weight: normal;
+  line-height: normal;
+  font-size: 12px;
+  color: #747474
+}
+
+.body-order-form .orderform-template .orderform-template-holder #shipping-data .pkpmodal .pkpmodal-info-bar .pkpmodal-info-bar-container .pkpmodal-header .pkpmodal-title {
+  font-family: Ubuntu;
+  font-style: normal;
+  font-weight: normal;
+  line-height: normal;
+  font-size: 18px;
+  color: #141414;
+  margin: 0;
+  margin-bottom: 10px
+}
+
+@media screen and (max-width: 768px) {
+  .body-order-form .orderform-template .orderform-template-holder #shipping-data .pkpmodal .pkpmodal-info-bar .pkpmodal-info-bar-container .pkpmodal-header .pkpmodal-title {
+    font-size: 16px;
+    font-family: 'Open Sans', sans-serif
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .body-order-form .orderform-template .orderform-template-holder #shipping-data .pkpmodal .pkpmodal-info-bar .pkpmodal-info-bar-container .pkpmodal-header {
+    margin-bottom: 10px
+  }
+}
+
+.body-order-form .orderform-template .orderform-template-holder #shipping-data .pkpmodal .pkpmodal-info-bar .pkpmodal-info-bar-container .pkpmodal-search {
+  padding-bottom: 20px;
+  border-bottom: 1px solid #D5D5D5
+}
+
+@media screen and (max-width: 768px) {
+  .body-order-form .orderform-template .orderform-template-holder #shipping-data .pkpmodal .pkpmodal-info-bar .pkpmodal-info-bar-container .pkpmodal-search {
+    border-bottom: 1px solid #D5D5D5;
+    padding-bottom: 10px;
+    margin-bottom: 15px
+  }
+}
+
+.body-order-form .orderform-template .orderform-template-holder #shipping-data .pkpmodal .pkpmodal-info-bar .pkpmodal-info-bar-container .pkpmodal-search input {
+  background: #fff;
+  border: 1px solid #C4C4C4;
+  box-sizing: border-box;
+  border-radius: 4px;
+  font-family: Ubuntu;
+  font-style: normal;
+  font-weight: normal;
+  line-height: normal;
+  font-size: 14px;
+  color: #747474;
+  padding: 11px 10px !important;
+  max-width: 74%;
+  width: 100%;
+  margin-left: 20px
+}
+
+.body-order-form .orderform-template .orderform-template-holder #shipping-data .pkpmodal .pkpmodal-info-bar .pkpmodal-info-bar-container .pkpmodal-search input::placeholder {
+  font-family: Ubuntu;
+  font-style: normal;
+  font-weight: normal;
+  line-height: normal;
+  font-size: 14px;
+  color: #747474
+}
+
+.body-order-form .orderform-template .orderform-template-holder #shipping-data .pkpmodal .pkpmodal-info-bar .pkpmodal-info-bar-container .pkpmodal-search .pkpmodal-search-icon {
+  left: calc(74% - 18px);
+  top: 2px;
+  background: #213A79;
+  border-radius: 4px;
+  width: 36px;
+  height: 36px;
+  padding: 10px
+}
+
+.body-order-form .orderform-template .orderform-template-holder #shipping-data .pkpmodal .pkpmodal-info-bar .pkpmodal-info-bar-container .pkpmodal-search .pkpmodal-search-icon path {
+  fill: #fff
+}
+
+.body-order-form .orderform-template .orderform-template-holder #shipping-data .pkpmodal .pkpmodal-info-bar .pkpmodal-info-bar-container .pkpmodal-search .pkp-modal-ask-geolocation-btn,
+.body-order-form .orderform-template .orderform-template-holder #shipping-data .pkpmodal .pkpmodal-info-bar .pkpmodal-info-bar-container .pkpmodal-search .pkp-modal-ask-geolocation-btn:hover {
+  padding: 0;
+  border: 0;
+  background: #213A79;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  margin-right: 10px;
+  opacity: 1
+}
+
+.body-order-form .orderform-template .orderform-template-holder #shipping-data .pkpmodal .pkpmodal-info-bar .pkpmodal-info-bar-container .pkpmodal-search .pkp-modal-ask-geolocation-btn .pkpmodal-use-geolocation-icon,
+.body-order-form .orderform-template .orderform-template-holder #shipping-data .pkpmodal .pkpmodal-info-bar .pkpmodal-info-bar-container .pkpmodal-search .pkp-modal-ask-geolocation-btn:hover .pkpmodal-use-geolocation-icon {
+  width: 20px;
+  height: auto;
+  margin: 0 auto
+}
+
+.body-order-form .orderform-template .orderform-template-holder #shipping-data .pkpmodal .pkpmodal-info-bar .pkpmodal-info-bar-container .pkpmodal-search .pkp-modal-ask-geolocation-btn .pkpmodal-use-geolocation-icon path,
+.body-order-form .orderform-template .orderform-template-holder #shipping-data .pkpmodal .pkpmodal-info-bar .pkpmodal-info-bar-container .pkpmodal-search .pkp-modal-ask-geolocation-btn:hover .pkpmodal-use-geolocation-icon path {
+  fill: #fff
+}
+
+.body-order-form .orderform-template .orderform-template-holder #shipping-data .pkpmodal .pkpmodal-info-bar .pkpmodal-info-bar-container .pickup-tabs-container {
+  margin-bottom: 10px
+}
+
+.body-order-form .orderform-template .orderform-template-holder #shipping-data .pkpmodal .pkpmodal-info-bar .pkpmodal-info-bar-container .pickup-tabs-container .pkpmodal-pickup-view-mode {
+  background: #F0F0F0;
+  border-radius: 25.5px;
+  padding: 0;
+  width: 90%;
+  margin: 0 auto
+}
+
+.body-order-form .orderform-template .orderform-template-holder #shipping-data .pkpmodal .pkpmodal-info-bar .pkpmodal-info-bar-container .pickup-tabs-container .pkpmodal-pickup-view-mode button {
+  border: none;
+  background: transparent;
+  font-style: normal;
+  font-weight: normal;
+  line-height: normal;
+  font-size: 18px;
+  color: #8A8989;
+  height: 50px;
+  outline: transparent
+}
+
+.body-order-form .orderform-template .orderform-template-holder #shipping-data .pkpmodal .pkpmodal-info-bar .pkpmodal-info-bar-container .pickup-tabs-container .pkpmodal-pickup-view-mode button.pkpmodal-pickup-view-list {
+  border-top-left-radius: 25.5px;
+  border-bottom-left-radius: 25.5px
+}
+
+.body-order-form .orderform-template .orderform-template-holder #shipping-data .pkpmodal .pkpmodal-info-bar .pkpmodal-info-bar-container .pickup-tabs-container .pkpmodal-pickup-view-mode button.pkpmodal-pickup-view-list.pkpmodal-pickup-view-option-active {
+  background: #213A79;
+  color: #fff;
+  border-top-right-radius: 25.5px;
+  border-bottom-right-radius: 25.5px
+}
+
+.body-order-form .orderform-template .orderform-template-holder #shipping-data .pkpmodal .pkpmodal-info-bar .pkpmodal-info-bar-container .pickup-tabs-container .pkpmodal-pickup-view-mode button.pkpmodal-pickup-view-map {
+  border-top-right-radius: 25.5px;
+  border-bottom-right-radius: 25.5px
+}
+
+.body-order-form .orderform-template .orderform-template-holder #shipping-data .pkpmodal .pkpmodal-info-bar .pkpmodal-info-bar-container .pickup-tabs-container .pkpmodal-pickup-view-mode button.pkpmodal-pickup-view-map.pkpmodal-pickup-view-option-active {
+  background: #213A79;
+  color: #fff;
+  border-top-left-radius: 25.5px;
+  border-bottom-left-radius: 25.5px
+}
+
+.body-order-form .orderform-template .orderform-template-holder #shipping-data .pkpmodal .pkpmodal-info-bar .pkpmodal-info-bar-container .pkpmodal-points-list .pkpmodal-pickup-point-main svg path {
+  fill: #213A79
+}
+
+.body-order-form .orderform-template .mini-cart {
+  margin-top: initial
+}
+
+.body-order-form .orderform-template .mini-cart .cart-fixed {
+  -webkit-box-shadow: 0px 0px 20px 0px rgba(8, 27, 62, 0.2);
+  -moz-box-shadow: 0px 0px 20px 0px rgba(8, 27, 62, 0.2);
+  box-shadow: 0px 0px 20px 0px rgba(8, 27, 62, 0.2);
+  -moz-border-radius: 4px;
+  -webkit-border-radius: 4px;
+  border-radius: 4px;
+  border: none;
+  margin: 15px;
+  padding: 11px;
+  font-size: 13px;
+  font-size: .8125rem;
+  color: #444;
+  line-height: 18px;
+  font-weight: 400
+}
+
+@media screen and (max-width: 480px) {
+  .body-order-form .orderform-template .mini-cart .cart-fixed {
+    margin: 0
+  }
+}
+
+.body-order-form .orderform-template .mini-cart .cart-fixed h2 {
+  text-align: left
+}
+
+.body-order-form .orderform-template .mini-cart .cart-fixed #go-to-cart-button small a {
+  font-family: Ubuntu;
+  font-style: normal;
+  font-weight: normal;
+  line-height: normal;
+  font-size: 12px;
+  color: #4BB8EF
+}
+
+.body-order-form .orderform-template .mini-cart .cart-fixed .summary-template-holder {
+  background: #fff
+}
+/*# sourceMappingURL=shopfacil-checkout-v6.css.map */
