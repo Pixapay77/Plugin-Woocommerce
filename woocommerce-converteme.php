@@ -71,7 +71,6 @@
                 // You can also register a webhook here
                  add_action( 'woocommerce_api_pagamento', array( $this, 'webhook' ) );
             }
-
             public function init_form_fields()
             {
                 $this->form_fields = array(
