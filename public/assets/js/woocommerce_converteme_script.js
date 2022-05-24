@@ -308,6 +308,7 @@ setTimeout(function(){
         jQuery('#woocommercerConverteme fieldset .content').hide();
         jQuery(this).addClass('active');
         jQuery('#woocommercerConverteme fieldset.'+type+' .content').show();
+        jQuery('#woocommercerConverteme fieldset.'+type).css('border','2px solid #00C767');
 
         jQuery('#woocommercerConverteme fieldset').removeClass('magin-bottom29');
         jQuery('#woocommercerConverteme fieldset.' + type).addClass('magin-bottom29');

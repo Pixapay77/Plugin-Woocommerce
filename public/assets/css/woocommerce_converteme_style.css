@@ -390,7 +390,8 @@
 #woocommercerConverteme fieldset{
     box-sizing: border-box;
     background: #F9F9F9;
-    border: 2px solid #00C767;
+    border: 2px solid #DDDDDD;
+    /*border: 2px solid #00C767;*/
     border-radius: 4px;
     position: relative;
     margin: 12px 0!important;
