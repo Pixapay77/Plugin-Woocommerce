@@ -193,14 +193,14 @@ class HooksCart
 
 
     function seomidia_woocommerce_cart_totals() {
-		wc_get_template( '../../seomidia-checkout-custom/templates/woocommerce/cart/cart-totals.php' );
+		wc_get_template( '../../woocommerce-converteme/templates/woocommerce/cart/cart-totals.php' );
 	}
 
 	/**
 	 * Output the billing form.
 	 */
 	function checkout_form_billing() {
-		wc_get_template( '../../seomidia-checkout-custom/templates/woocommerce/checkout/form-billing.php', array( 'checkout' => $this->Checkout ) );
+		wc_get_template( '../../woocommerce-converteme/templates/woocommerce/checkout/form-billing.php', array( 'checkout' => $this->Checkout ) );
 	}
 
 	public function checkout_form_shipping() {
