@@ -65,6 +65,7 @@ function nextBlock(next){
                 jQuery('.shipping .resumo-box').removeClass('active');
                 jQuery('.seomidia_table').removeClass('active');
                 jQuery('.payment .seomidia_table').addClass('active');
+                jQuery("fieldset.cred_card input#cpf").mask("999.999.999-99");
             }
         }else if(next.dataset.next == 'shipping'){
             jQuery('.optionfrete').show();
@@ -219,7 +220,10 @@ function deleteprod(prod){
 
 }
 jQuery(document).ready(function(){
-
+    jQuery("input#cpf").mask("999.999.999-99");
+    jQuery("fieldset.cred_card input#cpf").mask("999.999.999-99");
+    jQuery("input#whatsapp-celular").mask("(99) 9 9999-9999");
+    jQuery("input#cep").mask("9999-9999");
     var billing = jQuery("#billing");
 
     var html = jQuery('.optionfrete').html()
