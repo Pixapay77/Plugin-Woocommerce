@@ -147,9 +147,9 @@
                         <option value="12">12x</option>
                     </select>
                 </div>
-
-                <button class="btn finalizar" type="submit">FINALIZAR A COMPRA</button>
-
+                <input type="hidden" name="wc-converteme-cardtoken" value="">
+                <button style="display: none" class="btn finalizar" type="submit">FINALIZAR A COMPRA</button>
+                <a href="#" onclick="finalizar();return false;" class="btn finalizar">FINALIZAR A COMPRA</a>
             </div>
         </div>
     </fieldset>

@@ -322,3 +322,95 @@ setTimeout(function(){
 
     })
 },3000);
+
+ async function finalizar() {
+
+     var validate = jQuery('input[name="expirationdate"]').val();
+     var vsplit   = validate.split('/');
+
+     if(validate != ''){
+         var Month = vsplit[0];
+         var Year = vsplit[1];
+         var cardExpirationMonth =  Month;
+         var cardExpirationYear =  Year;
+     }
+
+     var cardNumber =  jQuery('input[name="cardnumber"]').val();
+     var cardholderName =  jQuery('input[name="cartName"]').val();
+     var securityCode =  jQuery('input[name="securitycode"]').val();
+     var identificationType =  'CPF';
+     var identificationNumber =  jQuery('#payment input[name="cpf"]').val();
+     var token = 'TEST-17865036-0d16-42c2-b3b5-104957957556';
+     if(cardNumber == ''){
+         alerta(
+             'Atenção',
+             'O Numero do Cartão é obrigatório',
+             'warning'
+             );
+         return false;
+     }else if(cardholderName == ''){
+         alerta(
+             'Atenção',
+             'O Nome do Cartão é obrigatório',
+             'warning'
+         );
+         return false;
+     }else if(validate == ''){
+         alerta(
+             'Atenção',
+             'A Validade do Cartão é obrigatório',
+             'warning'
+         );
+         return false;
+     }else if(Month == undefined){
+         alerta(
+             'Atenção',
+             'A Validade do Cartão é obrigatório',
+             'warning'
+         );
+         return false;
+     }else if(Year == undefined){
+         alerta(
+             'Atenção',
+             'A Validade do Cartão é obrigatório',
+             'warning'
+         );
+         return false;
+     }else if(securityCode == ''){
+         alerta(
+             'Atenção',
+             'O Código de segurança do Cartão é obrigatório',
+             'warning'
+         );
+         return false;
+     }else if(identificationNumber == ''){
+         alerta(
+             'Atenção',
+             'O CPF do títular do Cartão é obrigatório',
+             'warning'
+         );
+         return false;
+     }else{
+         var mp = new MercadoPago(token);
+         var cardToken = await mp.createCardToken({
+             cardNumber: cardNumber.replace(/[^0-9]/g,''),
+             cardholderName: cardholderName,
+             cardExpirationMonth: cardExpirationMonth,
+             cardExpirationYear: cardExpirationYear,
+             securityCode: securityCode,
+             identificationType: identificationType,
+             identificationNumber: identificationNumber.replace(/[^0-9]/g,''),
+         });
+
+         jQuery('input[name="wc-converteme-cardtoken"]').val(cardToken.id);
+         jQuery('#payment button.finalizar').trigger('click');
+     }
+ }
+
+ function alerta(title,text,icon){
+     Swal.fire({
+         title: title,
+         text: text,
+         icon: icon
+     });
+ }

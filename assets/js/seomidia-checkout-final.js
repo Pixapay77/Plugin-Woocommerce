@@ -54,6 +54,9 @@ function loadshipping(){
   });
 
 }
+
+
+
 function nextBlock(next){
     if(checkinput(next)) {
         jQuery('#' + next.dataset.prev + ' .content-none').hide();
@@ -61,7 +64,7 @@ function nextBlock(next){
             jQuery('#' + next.dataset.next + ' .content-none').show();
             if(next.dataset.next == 'payment'){
                 jQuery('.optionfrete').hide();
-                jQuery('#shipping a.next').remove();
+                jQuery('#shipping a.next').hide();
                 jQuery('.shipping .resumo-box').removeClass('active');
                 jQuery('.seomidia_table').removeClass('active');
                 jQuery('.payment .seomidia_table').addClass('active');
@@ -69,6 +72,21 @@ function nextBlock(next){
             }
         }else if(next.dataset.next == 'shipping'){
             jQuery('.optionfrete').show();
+        }else if(next.dataset.next == ''){
+            setTimeout(function(){
+                jQuery('#shipping_method').load( window.location.origin +  window.location.pathname + ' #shipping_method')
+            },1000);
+            setTimeout(function(){
+                jQuery('ul#shipping_method li').click(function(){
+                    jQuery('ul#shipping_method li').removeClass('active');
+                    jQuery(this).addClass('active');
+                    jQuery('#shipping a.next').remove();
+                    jQuery('#shipping.shipping').append('<a href="#" data-next="payment" data-prev="shipping" onclick="nextBlock(this)" class="btn next poscep">CONTINUAR</a>')
+                });
+                jQuery('body').trigger('update_checkout');
+                var shipingActive = jQuery("#shipping_method input[type='radio']:checked").attr('id');
+                jQuery("#shipping_method label[for='"+shipingActive+"']").trigger('click')
+            },2000);
         }
     }
 }
@@ -156,7 +174,6 @@ function checkinput(next){
                  jQuery('input#billing_neighborhood').val(inputs[i].value);
              }
              if(id == 'city'){
-                 console.log(inputs);
                  jQuery('p#cidadeUFcep').html(inputs[i].value+'-'+inputs[i+1].value+' | CEP '+inputs[4].value);
                  jQuery('select#billing_country').val('BR');
                  jQuery('select#billing_state option[value="'+inputs[i+1].value+'"]').prop("selected", true).change()
@@ -224,6 +241,7 @@ jQuery(document).ready(function(){
     jQuery("fieldset.cred_card input#cpf").mask("999.999.999-99");
     jQuery("input#whatsapp-celular").mask("(99) 9 9999-9999");
     jQuery("input#cep").mask("9999-9999");
+
     var billing = jQuery("#billing");
 
     var html = jQuery('.optionfrete').html()
@@ -251,6 +269,7 @@ jQuery(document).ready(function(){
     jQuery('.billing .resumo-box').click(function(event){
         event.preventDefault();
         jQuery('.seomidia_table').removeClass('active');
+        jQuery('.poscep').hide();
         jQuery('#billing .billing').addClass('active');
         jQuery('.billing .resumo-box').hide();
         jQuery('#billing .billing .content-none').show();
@@ -261,8 +280,8 @@ jQuery(document).ready(function(){
         jQuery('#shipping .content-none').hide();
         jQuery('.shipping .resumo-box').hide();
         jQuery('.shipping .optionfrete').hide();
-        jQuery('#shipping .content-none a.next').remove();
-        jQuery('#shipping.shipping .content-none').append('<a href="#" data-next="" data-prev="shipping" onclick="nextBlock(this)" class="btn next poscep">CONTINUAR</a>')
+        // jQuery('#shipping .content-none a.next').remove();
+        // jQuery('#shipping.shipping .content-none').append('<a href="#" data-next="" data-prev="shipping" onclick="nextBlock(this)" class="btn next poscep">CONTINUAR</a>')
     });
 
     jQuery('.shipping .resumo-box').click(function(event){
@@ -273,12 +292,10 @@ jQuery(document).ready(function(){
         jQuery('.shipping .resumo-box').hide();
         jQuery('.shipping .optionfrete').hide();
         jQuery('.shipping .content-none').show();
-        jQuery('#shipping.shipping .content-none a.next').remove();
-        jQuery('#shipping.shipping').append('<a href="#" data-next="payment" data-prev="shipping" onclick="nextBlock(this)" class="btn next poscep">CONTINUAR</a>')
-
+        jQuery('#shipping.shipping a.next').show();
+        jQuery('#shipping.shipping a.next').attr('data-next','');
+        // jQuery('#shipping.shipping').append('<a href="#" data-next="payment" data-prev="shipping" onclick="nextBlock(this)" class="btn next poscep">CONTINUAR</a>')
     });
-
-
 
     jQuery('ul#shipping_method li').click(function(){
         jQuery('ul#shipping_method li').removeClass('active');
@@ -320,6 +337,7 @@ jQuery(document).ready(function(){
                         jQuery("#city").val(dados.localidade);
                         jQuery("#state").val(dados.uf);
                         jQuery("#cityState").html(dados.localidade +'/'+dados.uf);
+
 
 
                     } //end if.

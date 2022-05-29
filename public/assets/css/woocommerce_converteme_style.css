@@ -2,7 +2,7 @@
 
 /*form cred cart */
 
-#woocommercerConverteme button.finalizar{
+#woocommercerConverteme button.finalizar, #woocommercerConverteme a.finalizar{
     box-sizing: border-box;
     background: #00C767;
     border-radius: 4px;

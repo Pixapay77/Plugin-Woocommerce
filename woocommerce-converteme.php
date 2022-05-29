@@ -220,7 +220,6 @@
 
                 $args = $this->Payload($order,$_POST);
 
-
                 /*
                  * Your API interaction could be built with wp_remote_post()
                   */
@@ -236,9 +235,10 @@
 
                 $body = json_decode( $response['body'], true );
 
+
                 if( !is_wp_error( $response ) && $response["response"]["code"] == 200) {
                     // it could be different depending on your payment processor
-                    if ( isset($body['tid']) && $body['tid'] != '' ) {
+                    if ( isset($body['transaction']) && $body['transaction'] != '' ) {
 
                         // Empty cart
                         $woocommerce->cart->empty_cart();
@@ -292,11 +292,10 @@
                 $metodo = (in_array($brand,['pix','boleto'])) ? $brand : 'credit_card';
 
                 $payload = [
-                    "place"           => $order->ID,
+                    "external_reference" => "{$order->ID}",
                     "cart_amount"     => (int) $order->get_subtotal() * 100,
                     "total_amount"    => (int) $order->get_total() * 100,
                     "shipment_amount" => (int) $order->get_shipping_total() * 100,
-                    "installments"    => (int) $installments,
                     "soft_descriptor" => get_bloginfo( 'name' ),
                     "customer"        => [
                         "name"     => $order->get_billing_first_name(),
@@ -333,9 +332,11 @@
                         "card_expiration_date" => preg_replace('/[^0-9]/', '', $expirationdate),
                         "card_number" => preg_replace('/[^0-9]/', '', $cardnumber),
                         "card_cvv" => $securitycode,
+                        "card_token" => $dados['wc-converteme-cardtoken'],
                         "pix_expiration_date" => $this->Datedue(),
                         "boleto_instructions" => "Não receber após vencimento",
-                        "boleto_expiration_date"=> $this->Datedue()
+                        "boleto_expiration_date"=> $this->Datedue(),
+                        "installments"    => (int) $installments
                     ]
                 ];
 
@@ -350,14 +351,15 @@
                     unset($payload['payment']['card_cvv']);
                     unset($payload['payment']['boleto_instructions']);
                     unset($payload['payment']['boleto_expiration_date']);
+                    unset($payload['payment']['card_token']);
                 }elseif($brand == 'boleto'){
                     unset($payload['payment']['card_holder_name']);
                     unset($payload['payment']['card_expiration_date']);
                     unset($payload['payment']['card_number']);
                     unset($payload['payment']['card_cvv']);
                     unset($payload['payment']['pix_expiration_date']);
+                    unset($payload['payment']['card_token']);
                 }
-
 
                 return json_encode($payload);
             }
@@ -546,6 +548,7 @@
     {
         wp_enqueue_style('woocommerce_converteme_style',plugin_dir_url(__FILE__) . 'public/assets/css/woocommerce_converteme_style.css',[],false,false);
         wp_enqueue_script('woocommerce_converteme_script_imask','https://cdnjs.cloudflare.com/ajax/libs/imask/3.4.0/imask.min.js',['jquery'],false,false);
+        wp_enqueue_script('woocommerce_converteme_script_mercadopago','https://sdk.mercadopago.com/js/v2',['jquery'],false,false);
         wp_enqueue_script('woocommerce_converteme_script',plugin_dir_url(__FILE__) . 'public/assets/js/woocommerce_converteme_script.js',['jquery'],false,false);
     }
 
