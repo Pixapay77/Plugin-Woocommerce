@@ -262,6 +262,18 @@ jQuery(document).ready(function(){
                 jQuery('#shipping a.next').remove();
                 jQuery('#shipping.shipping').append('<a href="#" data-next="payment" data-prev="shipping" onclick="nextBlock(this)" class="btn next poscep">CONTINUAR</a>')
             });
+            var shipingActive = jQuery("#shipping_method input[type='radio']:checked").attr('id');
+
+            if(shipingActive != undefined){
+                var shippingActive = jQuery('#shipping .optionfrete');
+                if(shippingActive.length > 0){
+                    var display = shippingActive[0].style.display;
+                    console.log(display);
+                    if(display == ''){
+                        jQuery("#shipping_method label[for='"+shipingActive+"']").trigger('click')
+                    }
+                }
+            }
         },1000);
 
     });
