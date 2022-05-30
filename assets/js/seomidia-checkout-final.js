@@ -1,7 +1,7 @@
 function validacaoEmail(field) {
     usuario = field.substring(0, field.indexOf("@"));
     dominio = field.substring(field.indexOf("@")+ 1, field.length);
-    
+
     if ((usuario.length >=1) &&
         (dominio.length >=3) &&
         (usuario.search("@")==-1) &&
@@ -33,11 +33,11 @@ function loadshipping(){
 
             jQuery('.shippingg label').removeAttr('style');
             jQuery('.shippingg label').removeAttr('id');
-            jQuery('#' + id).prop("checked", true); 
+            jQuery('#' + id).prop("checked", true);
             jQuery('label[for="'+id+'"]').css({'font-weight': 'bolder','color': '#254ce8'});
             jQuery('label[for="'+id+'"]').attr('id','entrega-selecionada');
 
-    
+
             if(Number.isInteger(id)){
             var entrega = jQuery('label[for="'+id+'"]').text();
             entrega = entrega.split(':')[1];
@@ -74,16 +74,6 @@ function nextBlock(next){
             jQuery('.optionfrete').show();
         }else if(next.dataset.next == ''){
             setTimeout(function(){
-                jQuery('#shipping_method').load( window.location.origin +  window.location.pathname + ' #shipping_method')
-            },1000);
-            setTimeout(function(){
-                jQuery('ul#shipping_method li').click(function(){
-                    jQuery('ul#shipping_method li').removeClass('active');
-                    jQuery(this).addClass('active');
-                    jQuery('#shipping a.next').remove();
-                    jQuery('#shipping.shipping').append('<a href="#" data-next="payment" data-prev="shipping" onclick="nextBlock(this)" class="btn next poscep">CONTINUAR</a>')
-                });
-                jQuery('body').trigger('update_checkout');
                 var shipingActive = jQuery("#shipping_method input[type='radio']:checked").attr('id');
                 jQuery("#shipping_method label[for='"+shipingActive+"']").trigger('click')
             },2000);
@@ -262,7 +252,17 @@ jQuery(document).ready(function(){
         jQuery('input.inputcupon').change(function(event){
             var value = jQuery('input.inputcupon').val();
             jQuery('input[name="coupon_code"]').val(value);
-        })
+        });
+
+        jQuery('#shipping_method').load( window.location.origin +  window.location.pathname + ' #shipping_method');
+        setTimeout(function (){
+            jQuery('ul#shipping_method li').click(function(){
+                jQuery('ul#shipping_method li').removeClass('active');
+                jQuery(this).addClass('active');
+                jQuery('#shipping a.next').remove();
+                jQuery('#shipping.shipping').append('<a href="#" data-next="payment" data-prev="shipping" onclick="nextBlock(this)" class="btn next poscep">CONTINUAR</a>')
+            });
+        },1000);
 
     });
 
@@ -331,6 +331,8 @@ jQuery(document).ready(function(){
 
                     if (!("erro" in dados)) {
                         jQuery('.poscep').show();
+                        jQuery('.optionfrete').hide();
+
                         //Atualiza os campos com os valores da consulta.
                         jQuery("#address").val(dados.logradouro);
                         jQuery("#neighborhood").val(dados.bairro);
@@ -338,7 +340,7 @@ jQuery(document).ready(function(){
                         jQuery("#state").val(dados.uf);
                         jQuery("#cityState").html(dados.localidade +'/'+dados.uf);
 
-
+                        jQuery("#shipping_method input[type='radio']:checked").prop('checked', false);
 
                     } //end if.
                     else {
@@ -349,7 +351,7 @@ jQuery(document).ready(function(){
                             "CEP não encontrado.",
                             'warning'
                         )
-                
+
                     }
                 });
             } //end if.
@@ -378,7 +380,7 @@ jQuery(document).ready(function(){
     jQuery('.cart-collaterals').addClass('seomidia_table');
 
 
-    //checkoiut 
+    //checkoiut
 
 
     var intervalId = window.setInterval(function(){
@@ -391,7 +393,7 @@ jQuery(document).ready(function(){
             var dados = {
                'action' : "check_Session",
            };
-   
+
            jQuery.post({
                url: ajax_object.ajax_url,
                dataType: "json",
@@ -405,7 +407,7 @@ jQuery(document).ready(function(){
                    }
                }
            });
-   
+
         });
     },1000);
 
@@ -427,12 +429,12 @@ jQuery(document).ready(function(){
 
             setTimeout(function(){
                 jQuery('#shipping').load( window.location.origin +  window.location.pathname + ' #shipping');
-            },3000); 
+            },3000);
             setTimeout(function(){
                 get_endereco_cep();
                 loadshipping();
-            },4000);        
-       
+            },4000);
+
         });
 
 
@@ -442,7 +444,7 @@ jQuery(document).ready(function(){
             jQuery('a.checkout-button').click(function(){
                 swal.fire({
                     title: 'Aguarde...'
-                });        
+                });
             });
             jQuery('#billing_cpf').keyup(function(){
                 var totalcpf;
@@ -454,7 +456,7 @@ jQuery(document).ready(function(){
                     jQuery('#tab1 h4').append('<i class="fa fa-edit" aria-hidden="true"  style="float: right;"></i>');
                     jQuery('#tab1 h4 i.fa.fa-check').remove();
                     jQuery('#tab1 h4').prepend('<i class="fa fa-check" aria-hidden="true"></i>');
-                
+
                     jQuery('#tab1 .content').hide();
                     jQuery('#tab2 .content').show();
                     jQuery('#tab3 .content').show();
@@ -475,7 +477,7 @@ jQuery('.resumo a.finalizar-compra').click(function(event){
     event.preventDefault();
     var entrega = jQuery('.shipping__table--multiple ul li input[type="radio"]:checked').length;
     var opcaopg = jQuery('.payment_methods input[name="juno-credit-card-card-info"]').length;
-    
+
     if(entrega == 0){
         Swal.fire({
             title: 'Atenção',
@@ -503,7 +505,7 @@ jQuery('.resumo a.finalizar-compra').click(function(event){
 
 
     if(jQuery('.payment #payment ul input[name="payment_method"]:checked')[0].value == 'juno-credit-card'){
-        
+
     var input = jQuery('.wc-payment-form-fields input[type="text"],.wc-payment-form-fields input[type="tel"]');
     var total = input.length;
 
@@ -518,7 +520,7 @@ jQuery('.resumo a.finalizar-compra').click(function(event){
             confirmButtonColor: '#3085d6',
             confirmButtonText: 'OK!',
           })
-   
+
     }
     }
 
@@ -530,7 +532,7 @@ jQuery('.resumo a.finalizar-compra').click(function(event){
 
         var tab1 = jQuery('#tab1 input');
 tab1.change(function(){
-var tab1total = tab1.length;  
+var tab1total = tab1.length;
 var value = 0;
 for(var i = 0;i < tab1total;i++){
   if(tab1[i].value != '')
@@ -593,7 +595,7 @@ jQuery('#billing_address_2').change(function(){
 
 var tab3 = jQuery('#tab3 input');
 tab3.change(function(){
-var tab3total = tab3.length;  
+var tab3total = tab3.length;
 var value = 0;
 for(var i = 0;i < tab3total;i++){
   if(tab3[i].value != '')
@@ -617,7 +619,7 @@ for(var i = 0;i < tab3total;i++){
     jQuery('.shippingg').css({
         'margin-bottom': '8px'
     });
-    
+
 
     jQuery('.payment').addClass('seomidia_table');
     jQuery('#billing_phone_field').removeClass('form-row-first');
@@ -631,7 +633,7 @@ for(var i = 0;i < tab3total;i++){
 
 
 
-  
+
     var intervalId = window.setInterval(function(){
         var entrega;
         var entregatext;
@@ -671,9 +673,9 @@ for(var i = 0;i < tab3total;i++){
             jQuery('.resumo table.shop_table tfoot tr.entrega').remove();
             jQuery('.resumo table.shop_table tfoot').prepend('<tr class="entrega"><th colspan="2">Entrega</th><td><span class="woocommerce-Price-amount amount"><bdi><span class="woocommerce-Price-currencySymbol">R$</span>'+entrega+'</bdi></span></td></tr>');
             }
- 
 
-    
+
+
         jQuery('.resumo #payment').remove();
         jQuery('.resumo td.shipping__inner').remove();
 
@@ -702,7 +704,7 @@ for(var i = 0;i < tab3total;i++){
                 jQuery('button[name="update_cart"]').trigger('click');
             },1000)
         })
-        
+
 
     },1000);
 
@@ -725,7 +727,7 @@ for(var i = 0;i < tab3total;i++){
         jQuery('#billing_postcode_field').addClass('form-row-first');
         jQuery('#billing_phone_field').removeAttr('class');
         jQuery('#billing_phone_field').addClass('form-row-last');
-   
+
         jQuery('#billing_address_1_field').removeAttr('class');
         jQuery('#billing_address_1_field').addClass('form-row-first');
         jQuery('#billing_number_field').removeAttr('class');
@@ -772,7 +774,7 @@ for(var i = 0;i < tab3total;i++){
                     jQuery('.carrinho').hide();
                     var largura = window.screen.width;
                     if(largura <= 560){
-            
+
                                 swal.close();
                     }
 
@@ -790,7 +792,7 @@ for(var i = 0;i < tab3total;i++){
         swal.fire({
             title: 'Aguarde...'
         });
-        
+
         swal.showLoading();
         var email = jQuery('.busca-email input[name="email"]').val();
         if(email == ''){
