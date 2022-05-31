@@ -246,15 +246,19 @@
                         // Redirect to the thank you page
                         $this->TypePayment = $body["payment_method"];
 
+                        $this->OrderCreate((object) $body);
+
                         update_post_meta($order_id,'_converteme_payment_type',$this->TypePayment);
                         if($this->TypePayment == 'boleto'){
                             update_post_meta($order_id,'_converteme_boleto_barcode',$body["boleto_barcode"]);
                             update_post_meta($order_id,'_converteme_boleto_expiration_date',$body["boleto_expiration_date"]);
-                            update_post_meta($order_id,'_converteme_boleto_boleto_url',$body["boleto_url"]);
+                            update_post_meta($order_id,'_converteme_boleto_boleto_url',$body["boleto"]['url']);
                         }elseif($this->TypePayment == 'pix'){
                             update_post_meta($order_id,'_converteme_pix_qr_code',$body["pix_qr_code"]);
                             update_post_meta($order_id,'_converteme_pix_expiration_date',$body["pix_expiration_date"]);
                         }
+
+
 
                         return array(
                             'result' => 'success',
@@ -425,8 +429,32 @@
                 $this->OrderReturn((object) $data);
                 exit();
             }
+            public function OrderCreate($data)
+            {
+                $transition     = $data->transaction;
+                $status         = $data->status;
+                $order_id       = $data->external_reference;
+                $payment_method = $data->payment_method;
+                $link_boleto    = $data->boleto['url'];
+                $pix_qrCodeUrl  = $data->pix_qr_code;
+
+                $order = wc_get_order( $order_id );
+
+                if($payment_method == "boleto"){
+                    $description =  "Aguardando pagamento por boleto. \n" . "Link boleto <a target='_blanck' href='".$link_boleto."'>" . $link_boleto . '</a>';
+                }elseif($payment_method == "credit_card"){
+                    $description = "Aguardando pagamento por Cartão de credito.";
+                }elseif($payment_method == "pix"){
+                    $description = "Aguardando pagamento por PIX.\n" . ' qrcode url: ' . $pix_qrCodeUrl;
+                }
+
+                // some notes to customer (replace true with false to make it private)
+                $order->add_order_note(  $description, true );
+            }
+
             public function OrderReturn($data)
             {
+
                 $transition     = $data->resource['id'];
                 $status         = $data->resource['status'];
                 $order_id       = $data->resource['reference_id'];
@@ -435,56 +463,57 @@
 
                 $order = wc_get_order( $order_id );
 
-                $description = ($payment_method == "BOLETO") ? $payment_method . " Link <a target='_blanck' href='".$link_boleto."'>" . $link_boleto . '</a>' : $payment_method;
 
-                if($status == 'paid'){
+                if($status == 'approved'){
                     $order->payment_complete();
                     $order->reduce_order_stock();
                     // some notes to customer (replace true with false to make it private)
-                    $order->add_order_note( 'Pagamento confirmado por ' . $payment_method, true );
+                    $order->add_order_note( "Pagamento confirmado.\n" . "Codigo de transação: " . $transition, true );
                 }elseif($status == 'waiting_payment'){
                     // some notes to customer (replace true with false to make it private)
-                    $order->add_order_note( 'Aguardando pagamento por ' . $description, true );
+                    $order->add_order_note( 'Aguardando pagamento.', true );
                 }
             }
             public function dados_pagamento($order_id) {
-                        $code   = get_post_meta($order_id,'_converteme_pix_qr_code',true);
-                        if($code != '')
-                            $base64 = (new QRCode)->render($code);
-                        $pix = '
-                            <td class="woocommerce-table__product-name product-name" style="text-align: center">
-                                <div id="converteme-pix">
-                                Utilize o QRCode e pague o PIX pelo celular
-                                    <img src="'.$base64.'" />
-                                </div>
-                            </td>
-                            <td class="woocommerce-table__product-name product-name" style="text-align: center">
-                                <div id="converteme-pix-codigo">
-                                    <label>Código de pagamento</label><br>
-                                    <input type="text" id="codepix" value="'.get_post_meta($order_id,'_converteme_pix_qr_code',true).'">
-                                    <br><span>Copiar código</span>
-                                 </div>
-                            </td>
-                            <td class="woocommerce-table__product-name product-name" style="text-align: center">
-                                Vencimento
-                                '.get_post_meta($order_id,'_converteme_pix_expiration_date',true).'
-                            </td>
-                        ';
+                $TypePayment = get_post_meta($order_id,'_converteme_payment_type',true);
+                if($TypePayment == 'credit_card') return;
 
-                        $boleto = '
-                            <td colspan="2" class="woocommerce-table__product-name product-name" style="text-align: center">
-                                <div id="converteme-pix-codigo">
-                                    <label>Boleto</label><br>
-                                    <a target="_blank" href="'.get_post_meta($order_id,'_converteme_boleto_boleto_url',true).'">Abrir boleto</a>
-                                 </div>
-                            </td>
-                            <td class="woocommerce-table__product-name product-name" style="text-align: center">
-                                Vencimento<br>
-                                '.get_post_meta($order_id,'_converteme_boleto_expiration_date',true).'
-                            </td>
-                        ';
+                    $code   = get_post_meta($order_id,'_converteme_pix_qr_code',true);
+                    if($code != '')
+                        $base64 = (new QRCode)->render($code);
+                    $pix = '
+                        <td class="woocommerce-table__product-name product-name" style="text-align: center">
+                            <div id="converteme-pix">
+                            Utilize o QRCode e pague o PIX pelo celular
+                                <img src="'.$base64.'" />
+                            </div>
+                        </td>
+                        <td class="woocommerce-table__product-name product-name" style="text-align: center">
+                            <div id="converteme-pix-codigo">
+                                <label>Código de pagamento</label><br>
+                                <input type="text" id="codepix" value="'.get_post_meta($order_id,'_converteme_pix_qr_code',true).'">
+                                <br><span>Copiar código</span>
+                             </div>
+                        </td>
+                        <td class="woocommerce-table__product-name product-name" style="text-align: center">
+                            Vencimento
+                            '.get_post_meta($order_id,'_converteme_pix_expiration_date',true).'
+                        </td>
+                    ';
 
-                        $TypePayment = get_post_meta($order_id,'_converteme_payment_type',true);
+                    $boleto = '
+                        <td colspan="2" class="woocommerce-table__product-name product-name" style="text-align: center">
+                            <div id="converteme-pix-codigo">
+                                <label>Boleto</label><br>
+                                <a target="_blank" href="'.get_post_meta($order_id,'_converteme_boleto_boleto_url',true).'">Abrir boleto</a>
+                             </div>
+                        </td>
+                        <td class="woocommerce-table__product-name product-name" style="text-align: center">
+                            Vencimento<br>
+                            '.get_post_meta($order_id,'_converteme_boleto_expiration_date',true).'
+                        </td>
+                    ';
+
                         $typePayment = ($TypePayment == 'pix') ? $pix : $boleto;
 
                         $html = '
