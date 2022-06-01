@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@500;700&display=swap');
 body{
-  background: #f8f8f8;
-  font-family: 'Inter', sans-serif;
+  background: #f8f8f8!important;
+  font-family: 'Inter', sans-serif!important;
 }
 
 .bg-black{
@@ -113,6 +113,7 @@ ul#shipping_method li input{
 }
 #checkout-final td span.woocommerce-Price-amount.amount{
   font-size: 13px;
+  color: #000;
 }
 #checkout-final td a{
   font-size: 13px!important;
@@ -831,7 +832,7 @@ tr.order-total td,tr.order-total th {
     text-decoration: none!important;
     margin-top: 10px;
   }
-  
+
   #billing_email_field.form-row-first{
     width: 100%!important;
   }

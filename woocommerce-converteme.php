@@ -11,11 +11,32 @@
     require_once 'vendor/autoload.php';
     use chillerlan\QRCode\QRCode;
 
-    define('path_plugin',ABSPATH . 'wp-content/plugins/woocommerce-converteme/');
-
     require_once ABSPATH ."/wp-load.php";
     include_once WP_PLUGIN_DIR .'/woocommerce/woocommerce.php';
-    require_once __DIR__ . '/includes/PathTemplate.php';
+
+
+define('path_plugin',ABSPATH . 'wp-content/plugins/woocommerce-converteme/');
+
+
+    function clean_styles(){
+        if(is_checkout() && !is_order_received_page('order-received')){
+            global $wp_styles;
+
+            foreach( $wp_styles->queue as $style ) :
+                $handle = $wp_styles->registered[$style]->handle;
+                $css_exception = ['woocommerce_converteme_style','admin-bar','woocommerce-converteme-script','woocommerce-converteme-bootstrap','woocommerce-converteme-font-awesome','seomidia-checkout-final','seomidia-checkout-sweetalert2','seomidia-checkout-maskedinput','woocommerce-converteme-page'];
+
+                if( !in_array( $handle, $css_exception ) ){
+                    wp_dequeue_style( $handle );
+                    wp_deregister_style( $handle );
+                }
+                endforeach;
+        }
+    }
+      add_action( 'wp_enqueue_scripts', "clean_styles", 99999);
+
+
+require_once __DIR__ . '/includes/PathTemplate.php';
     require_once __DIR__ . '/includes/scripts.php';
     require_once __DIR__ . '/includes/ajax.php';
     require_once __DIR__ . '/hooks/cart.php';
@@ -63,6 +84,7 @@
                 add_action( 'woocommerce_before_thankyou', array($this,'dados_pagamento'));
 
                 add_action( 'woocommerce_admin_order_data_after_billing_address', array($this,'order_cpf_backend'));
+
 
 
                 // We need custom JavaScript to obtain a token
@@ -250,8 +272,8 @@
 
                         update_post_meta($order_id,'_converteme_payment_type',$this->TypePayment);
                         if($this->TypePayment == 'boleto'){
-                            update_post_meta($order_id,'_converteme_boleto_barcode',$body["boleto_barcode"]);
-                            update_post_meta($order_id,'_converteme_boleto_expiration_date',$body["boleto_expiration_date"]);
+                            update_post_meta($order_id,'_converteme_boleto_barcode',$body["boleto"]["typeful_line"]);
+                            update_post_meta($order_id,'_converteme_boleto_expiration_date',$body["boleto"]["expiration_date"]);
                             update_post_meta($order_id,'_converteme_boleto_boleto_url',$body["boleto"]['url']);
                         }elseif($this->TypePayment == 'pix'){
                             update_post_meta($order_id,'_converteme_pix_qr_code',$body["pix_qr_code"]);
@@ -479,6 +501,7 @@
                 if($TypePayment == 'credit_card') return;
 
                     $code   = get_post_meta($order_id,'_converteme_pix_qr_code',true);
+                    $base64 = '';
                     if($code != '')
                         $base64 = (new QRCode)->render($code);
                     $pix = '
@@ -597,5 +620,6 @@ if ( ! function_exists( 'woocommerce_order_review' ) ) {
         );
     }
 }
+
 
 

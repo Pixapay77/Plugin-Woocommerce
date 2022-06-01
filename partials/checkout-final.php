@@ -1,3 +1,7 @@
+<div class="blockUI blockOverlay" style="z-index: 1000; border: medium none; margin: 0px; padding: 0px; width: 100%; height: 100%; top: 0px; left: 0px; background: rgb(255, 255, 255) none repeat scroll 0% 0%; opacity: 0.6; cursor: default; position: absolute;">
+    <p style="position: relative;top: 45%;text-align: center;"><img src="<?php echo get_option('home')?>/wp-admin/images/spinner-2x.gif" alt="Carregando..." title="Carregando..." </p>
+</div>
+
 <div id="checkout-final">
     <form name="checkout" method="post" class="checkout woocommerce-checkout "
         action="<?php echo get_option('home');?>/<?php echo basename(get_permalink());?>/" enctype="multipart/form-data">
@@ -70,7 +74,7 @@
                         <p id="bairroComplemento"></p>
                         <p id="cidadeUFcep"></p>
                     </div>
-                    <div class="optionfrete" style="display: none">
+                    <div id="optionfrete" class="optionfrete" style="display: none">
                         <h4>Escolha uma forma envio</h4>
                         <?php do_action( 'seomidia_checkout_order_shipping_options' ); ?>
                     </div>

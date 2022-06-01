@@ -10,8 +10,7 @@ class NewPathTemplate
 
     function wpa3396_page_template( $page_template )
     {
-            $slug = basename(get_permalink());
-            if ( in_array($slug,['checkout','finalizar-compra'])) {
+            if (is_checkout()) {
                 if(!is_order_received_page('order-received')){
                     $page_template =  dirname( path_plugin ) . '/woocommerce-converteme/modelo/seomidia-checkout.php';
                 }
@@ -22,27 +21,23 @@ class NewPathTemplate
 
     public function woo_adon_plugin_template( $template, $template_name, $template_path ) 
     {
-        
-        $templatet = str_replace(['themes','flatsome'],['plugins','woocommerce-converteme/templates'],$template);
+        if (is_checkout()) {
 
-        if($template_name == 'checkout/review-order.php'){
-            $templatet =  str_replace(['woocommerce/templates'],['woocommerce-converteme/templates/woocommerce'],$template);
+            if ($template_name == 'checkout/review-order.php') {
+                $template = str_replace(['woocommerce/templates'], ['woocommerce-converteme/templates/woocommerce'], $template);
+            }
+
+            if ($template_name == 'checkout/payment.php') {
+                $template = str_replace(['woocommerce/templates'], ['woocommerce-converteme/templates/woocommerce'], $template);
+            }
+
+            if ($template_name == 'checkout/payment-method.php') {
+                $template = str_replace(['woocommerce/templates'], ['woocommerce-converteme/templates/woocommerce'], $template);
+            }
+
         }
 
-        if($template_name == 'checkout/payment.php'){
-            $templatet =  str_replace(['woocommerce/templates'],['woocommerce-converteme/templates/woocommerce'],$template);
-        }
-
-        if($template_name == 'checkout/payment-method.php'){
-            $templatet =  str_replace(['woocommerce/templates'],['woocommerce-converteme/templates/woocommerce'],$template);
-        }
-
-        if($template_name == 'cart/mini-cart.php'){
-            $templatet =  str_replace(['woocommerce/templates'],['woocommerce-converteme/templates/woocommerce'],$template);
-        }
-
-//         var_dump($template_name);
-        return $templatet;
+        return $template;
     }
 
 }

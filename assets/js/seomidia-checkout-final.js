@@ -77,6 +77,8 @@ function nextBlock(next){
                 var shipingActive = jQuery("#shipping_method input[type='radio']:checked").attr('id');
                 jQuery("#shipping_method label[for='"+shipingActive+"']").trigger('click')
             },2000);
+            jQuery('.blockOverlay').show();
+
         }
     }
 }
@@ -226,6 +228,27 @@ function deleteprod(prod){
     })
 
 }
+
+function runoptionfrete(){
+    jQuery('ul#shipping_method li').click(function(){
+        jQuery('ul#shipping_method li').removeClass('active');
+        jQuery(this).addClass('active');
+        jQuery('#shipping a.next').remove();
+        jQuery('#shipping.shipping').append('<a href="#" data-next="payment" data-prev="shipping" onclick="nextBlock(this)" class="btn next poscep">CONTINUAR</a>')
+    });
+    var shipingActive = jQuery("#shipping_method input[type='radio']:checked").attr('id');
+
+    if(shipingActive != undefined){
+        var shippingActive = jQuery('#shipping .optionfrete');
+        if(shippingActive.length > 0){
+            var display = shippingActive[0].style.display;
+            loadCredtCart();
+            if(display == ''){
+                jQuery("#shipping_method label[for='"+shipingActive+"']").trigger('click')
+            }
+        }
+    }
+}
 jQuery(document).ready(function(){
     jQuery("input#cpf").mask("999.999.999-99");
     jQuery("fieldset.cred_card input#cpf").mask("999.999.999-99");
@@ -255,26 +278,12 @@ jQuery(document).ready(function(){
         });
 
         jQuery('#shipping_method').load( window.location.origin +  window.location.pathname + ' #shipping_method');
-        setTimeout(function (){
-            jQuery('ul#shipping_method li').click(function(){
-                jQuery('ul#shipping_method li').removeClass('active');
-                jQuery(this).addClass('active');
-                jQuery('#shipping a.next').remove();
-                jQuery('#shipping.shipping').append('<a href="#" data-next="payment" data-prev="shipping" onclick="nextBlock(this)" class="btn next poscep">CONTINUAR</a>')
-            });
-            var shipingActive = jQuery("#shipping_method input[type='radio']:checked").attr('id');
 
-            if(shipingActive != undefined){
-                var shippingActive = jQuery('#shipping .optionfrete');
-                if(shippingActive.length > 0){
-                    var display = shippingActive[0].style.display;
-                    console.log(display);
-                    if(display == ''){
-                        jQuery("#shipping_method label[for='"+shipingActive+"']").trigger('click')
-                    }
-                }
-            }
-        },1000);
+        setTimeout(function(){
+            runoptionfrete();
+       },3000)
+
+        jQuery('.blockOverlay').hide();
 
     });
 
@@ -310,6 +319,7 @@ jQuery(document).ready(function(){
     });
 
     jQuery('ul#shipping_method li').click(function(){
+		console.log(this);
         jQuery('ul#shipping_method li').removeClass('active');
         jQuery(this).addClass('active');
         jQuery('#shipping a.next').remove();
