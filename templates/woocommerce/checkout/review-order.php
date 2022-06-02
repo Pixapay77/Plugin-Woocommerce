@@ -120,6 +120,19 @@ defined( 'ABSPATH' ) || exit;
             <th colspan="2"><?php esc_html_e( 'Subtotal', 'woocommerce' ); ?></th>
             <td><?php wc_cart_totals_subtotal_html(); ?></td>
         </tr>
+        <tr class="cart-subtotal">
+        <?php
+            WC()->cart->calculate_shipping();
+            $packages = WC()->shipping()->get_packages();
+
+            foreach ( $packages as $i => $package ) {
+                $chosen_method = isset(WC()->session->chosen_shipping_methods[$i]) ? WC()->session->chosen_shipping_methods[$i] : '';
+
+                echo "<th colspan=\"2\">".$package['rates'][$chosen_method]->label."</th>";
+                echo "<td>" . wc_price( $package['rates'][$chosen_method]->cost )."</td>";
+            }
+            ?>
+        </tr>
 
         <tr class="order-total">
             <th colspan="2"><?php esc_html_e( 'Total', 'woocommerce' ); ?></th>

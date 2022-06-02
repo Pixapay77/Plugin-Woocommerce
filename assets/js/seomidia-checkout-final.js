@@ -236,6 +236,7 @@ function runoptionfrete(){
         jQuery('#shipping a.next').remove();
         jQuery('#shipping.shipping').append('<a href="#" data-next="payment" data-prev="shipping" onclick="nextBlock(this)" class="btn next poscep">CONTINUAR</a>')
     });
+
     var shipingActive = jQuery("#shipping_method input[type='radio']:checked").attr('id');
 
     if(shipingActive != undefined){
@@ -277,11 +278,16 @@ jQuery(document).ready(function(){
             jQuery('input[name="coupon_code"]').val(value);
         });
 
-        jQuery('#shipping_method').load( window.location.origin +  window.location.pathname + ' #shipping_method');
+        jQuery.get({
+            url: window.location.origin +  window.location.pathname,
+            success: function(response){
+                jQuery('#optionfrete').html(jQuery(response).find('#optionfrete').html());
+            }
+        })
 
         setTimeout(function(){
             runoptionfrete();
-       },3000)
+       },1000)
 
         jQuery('.blockOverlay').hide();
 

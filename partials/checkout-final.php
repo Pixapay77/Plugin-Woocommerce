@@ -1,6 +1,6 @@
-<div class="blockUI blockOverlay" style="z-index: 1000; border: medium none; margin: 0px; padding: 0px; width: 100%; height: 100%; top: 0px; left: 0px; background: rgb(255, 255, 255) none repeat scroll 0% 0%; opacity: 0.6; cursor: default; position: absolute;">
-    <p style="position: relative;top: 45%;text-align: center;"><img src="<?php echo get_option('home')?>/wp-admin/images/spinner-2x.gif" alt="Carregando..." title="Carregando..." </p>
-</div>
+<!--<div class="blockUI blockOverlay" style="z-index: 1000; border: medium none; margin: 0px; padding: 0px; width: 100%; height: 100%; top: 0px; left: 0px; background: rgb(255, 255, 255) none repeat scroll 0% 0%; opacity: 0.6; cursor: default; position: fixed;">-->
+<!--    <p style="position: relative;top: 45%;text-align: center;"><img src="--><?php //echo get_option('home')?><!--/wp-admin/images/spinner-2x.gif" alt="Carregando..." title="Carregando..." </p>-->
+<!--</div>-->
 
 <div id="checkout-final">
     <form name="checkout" method="post" class="checkout woocommerce-checkout "

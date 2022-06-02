@@ -35,6 +35,14 @@ class NewPathTemplate
                 $template = str_replace(['woocommerce/templates'], ['woocommerce-converteme/templates/woocommerce'], $template);
             }
 
+//            if ($template_name == 'cart/cart-shipping.php') {
+//                $template = str_replace(['woocommerce/templates'], ['woocommerce-converteme/templates/woocommerce'], $template);
+//            }
+//
+//            if ($template_name == 'art/shipping-calculator.php') {
+//                $template = str_replace(['woocommerce/templates'], ['woocommerce-converteme/templates/woocommerce'], $template);
+//            }
+
         }
 
         return $template;

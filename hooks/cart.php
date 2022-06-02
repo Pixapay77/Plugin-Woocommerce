@@ -85,15 +85,15 @@ class HooksCart
 
 		foreach ( $packages as $i => $package ) {
 			$chosen_method = isset( WC()->session->chosen_shipping_methods[ $i ] ) ? WC()->session->chosen_shipping_methods[ $i ] : '';
-			$product_names = array();
+                $product_names = array();
 
-			if ( count( $packages ) > 1 ) {
-				foreach ( $package['contents'] as $item_id => $values ) {
-					$product_names[ $item_id ] = $values['data']->get_name() . ' &times;' . $values['quantity'];
-				}
-				$product_names = apply_filters( 'woocommerce_shipping_package_details_array', $product_names, $package );
+                if ( count( $packages ) > 1 ) {
+                    foreach ( $package['contents'] as $item_id => $values ) {
+                        $product_names[ $item_id ] = $values['data']->get_name() . ' &times;' . $values['quantity'];
+                    }
+                    $product_names = apply_filters( 'woocommerce_shipping_package_details_array', $product_names, $package );
 
-			}
+                }
 
 			wc_get_template(
 				'cart/cart-shipping.php',
