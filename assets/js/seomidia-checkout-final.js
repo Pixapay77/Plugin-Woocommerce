@@ -281,7 +281,9 @@ jQuery(document).ready(function(){
         jQuery.get({
             url: window.location.origin +  window.location.pathname,
             success: function(response){
-                jQuery('#optionfrete').html(jQuery(response).find('#optionfrete').html());
+                var html = jQuery(response).find('#optionfrete').html();
+
+                jQuery('#optionfrete').html(html.replace('Entrega',''));
             }
         })
 
