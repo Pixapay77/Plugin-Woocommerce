@@ -6,13 +6,13 @@
     box-sizing: border-box;
     background: #00C767;
     border-radius: 4px;
-    padding: 10px 60px;
+    padding: 10px 30px;
     position: absolute;
     color: #ffffff;
     font-family: 'Inter', sans-serif;
     font-style: normal;
     font-weight: 700;
-    font-size: 14px;
+    font-size: 13px;
     width: 90%;
     bottom: -20px;
     left: 5%;
@@ -59,6 +59,7 @@
 #woocommercerConverteme .field-container a.finalizar-compra{
     position: absolute;
     bottom: -59px;
+    font-size: 14px;
 }
 
 

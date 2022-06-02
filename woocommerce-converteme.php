@@ -17,10 +17,37 @@
 
 define('path_plugin',ABSPATH . 'wp-content/plugins/woocommerce-converteme/');
 
+function myblog_unhook_wp_head_footer(){
+    global $wp_filter;
+    if( is_checkout() ) {
+        foreach( $wp_filter['wp_footer'] as $priority => $wp_footer_hooks ) {
+            if( is_array( $wp_footer_hooks ) ) {
+                foreach ( $wp_footer_hooks as $wp_footer_hook ) {
+                    $js_checkout = ['wp_enqueue_global_styles','wp_print_footer_scripts','wp_admin_bar_render'];
 
-    function clean_styles(){
+                    if(!in_array($wp_footer_hook['function'],$js_checkout))
+                        remove_action( 'wp_footer', $wp_footer_hook['function'], $priority );
+                }
+            }
+        }
+    }
+}
+add_action( 'wp', 'myblog_unhook_wp_head_footer' );
+
+
+function clean_styles(){
         if(is_checkout() && !is_order_received_page('order-received')){
-            global $wp_styles;
+            global $wp_styles,$wp_scripts;
+            foreach( $wp_scripts->queue as $script ) :
+                $handle = $wp_scripts->registered[$script]->handle;
+                $js_exception = ['wc-add-to-cart','selectWoo','wc-checkout','woocommerce','wc-cart-fragments','woocommerce-converteme-script','seomidia-checkout-final','seomidia-checkout-sweetalert2','seomidia-checkout-maskedinput','woocommerce_converteme_script_imask','woocommerce_converteme_script_mercadopago','woocommerce_converteme_script','wc-add-to-cart-variation'];
+
+                if( !in_array( $handle, $js_exception ) ){
+                    wp_dequeue_script( $handle );
+                    wp_deregister_script( $handle );
+                }
+            endforeach;
+
 
             foreach( $wp_styles->queue as $style ) :
                 $handle = $wp_styles->registered[$style]->handle;
@@ -34,6 +61,7 @@ define('path_plugin',ABSPATH . 'wp-content/plugins/woocommerce-converteme/');
         }
     }
       add_action( 'wp_enqueue_scripts', "clean_styles", 99999);
+
 
 
 require_once __DIR__ . '/includes/PathTemplate.php';
@@ -316,6 +344,7 @@ require_once __DIR__ . '/includes/PathTemplate.php';
                 }
 
                 $metodo = (in_array($brand,['pix','boleto'])) ? $brand : 'credit_card';
+                $cpf = ($cpf == '') ? $billing_cpf : $cpf;
 
                 $payload = [
                     "external_reference" => "{$order->ID}",
@@ -327,7 +356,7 @@ require_once __DIR__ . '/includes/PathTemplate.php';
                         "name"     => $order->get_billing_first_name(),
                         "email"    => $order->get_billing_email(),
                         "phone"    => preg_replace('/[^0-9]/', '', $order->get_billing_phone()),
-                        "document" => preg_replace('/[^0-9]/', '', $billing_cpf),
+                        "document" => preg_replace('/[^0-9]/', '', $cpf),
                         "ip"       => $_SERVER['REMOTE_ADDR']
                     ],
                     "billing"         => [

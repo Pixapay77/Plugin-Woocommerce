@@ -284,12 +284,13 @@ jQuery(document).ready(function(){
                 var html = jQuery(response).find('#optionfrete').html();
 
                 jQuery('#optionfrete').html(html.replace('Entrega',''));
+
+                setTimeout(function(){
+                    runoptionfrete();
+                },3000)
+
             }
         })
-
-        setTimeout(function(){
-            runoptionfrete();
-       },1000)
 
         jQuery('.blockOverlay').hide();
 

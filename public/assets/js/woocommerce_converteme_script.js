@@ -181,7 +181,7 @@
                 case 'maestro':
                     ccicon.innerHTML = maestro;
                     ccsingle.innerHTML = maestro_single;
-                    document.getElementById('brand').value = cardnumber_mask.masked.currentMask.cardtype;
+                    document.getElementById('brand').value = 'mastercard';
                     swapColor('yellow');
                     break;
                 case 'mastercard':
