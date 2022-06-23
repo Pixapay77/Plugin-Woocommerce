@@ -7,6 +7,15 @@ use chillerlan\QRCode\QRCode;
 require_once ABSPATH ."/wp-load.php";
 include_once WP_PLUGIN_DIR .'/woocommerce/woocommerce.php';
 
+// wp_enqueue_script('jquery');
+// This will enqueue the Media Uploader script
+function enqueue_media() {
+    if( function_exists( 'wp_enqueue_media' ) ) {
+        wp_enqueue_media();
+    }
+}
+
+add_action('admin_enqueue_scripts', 'enqueue_media');
 
 define('path_plugin',ABSPATH . 'wp-content/plugins/woocommerce-converteme/');
 
@@ -92,6 +101,7 @@ function Converteme_init()
             $this->title = $this->get_option( 'title' );
             $this->description = $this->get_option( 'description' );
             $this->enabled = $this->get_option( 'enabled' );
+            $this->filelogo = $this->get_option( 'filelogo' );
             $this->testmode = 'yes' === $this->get_option( 'testmode' );
             $this->clientid = $this->testmode ? $this->get_option( 'test_client_id' ) : $this->get_option( 'client_id' );
             $this->clientsecret = $this->testmode ? $this->get_option( 'test_client_secret' ) : $this->get_option( 'client_secret' );
@@ -114,6 +124,7 @@ function Converteme_init()
             // You can also register a webhook here
             add_action( 'woocommerce_api_pagamento', array( $this, 'webhook' ) );
         }
+
         public function init_form_fields()
         {
             $this->form_fields = array(
@@ -124,6 +135,16 @@ function Converteme_init()
                     'description' => '',
                     'default'     => 'no'
                 ),
+                'filelogo' => array(
+                    'title'       => 'Logo',
+                    'type'        => 'text',
+                    'description' => '',
+                    'default'     => 'https://converte.me/wp-content/uploads/2021/12/converteme2.png',
+                    'desc_tip'    => true,
+                    'class'       => 'uploadlogo'
+
+                ),
+
                 'title' => array(
                     'title'       => 'Titulo',
                     'type'        => 'text',
@@ -411,7 +432,8 @@ function Converteme_init()
 
             return json_encode($payload);
         }
-        public function  Datedue(){
+        public function  Datedue()
+        {
             $novadata = explode("/",date('d/m/Y'));
             $dia = $novadata[0];
             $mes = $novadata[1];
@@ -495,7 +517,6 @@ function Converteme_init()
             // some notes to customer (replace true with false to make it private)
             $order->add_order_note(  $description, true );
         }
-
         public function OrderReturn($data)
         {
 
@@ -518,7 +539,8 @@ function Converteme_init()
                 $order->add_order_note( 'Aguardando pagamento.', true );
             }
         }
-        public function dados_pagamento($order_id) {
+        public function dados_pagamento($order_id) 
+        {
             $TypePayment = get_post_meta($order_id,'_converteme_payment_type',true);
             if($TypePayment == 'credit_card') return;
 
@@ -608,6 +630,7 @@ function Converteme_init()
 
             echo $html;
         }
+
     }
 }
 
@@ -616,6 +639,8 @@ function WC_Converteme_add_gateway_class( $gateways ) {
     $gateways[] = 'WC_Converteme_Gateway'; // your class name is here
     return $gateways;
 }
+
+
 
 add_action('wp_enqueue_scripts', 'woocommerce_converteme_style');
 function woocommerce_converteme_style()
