@@ -2,11 +2,11 @@
 <div id="woocommercerConverteme">
     <fieldset class="cred_card">
         <legend>10% DE DESCONTO</legend>
-        <p class="title" data-type="cred_card">
+        <p class="title" data-type="cred_card" onclick="open_cred_card(this)">
             <span>CARTÃO DE CRÉDITO</span>
         </p>
         <span class="brands"></span>
-        <div class="content" style="max-width: 382px;margin-bottom: 10px;">
+        <div class="content cred_card" style="max-width: 382px;margin-bottom: 10px;">
             <div class="container preload">
                 <div class="creditcard">
                     <div class="front">
@@ -155,8 +155,8 @@
     </fieldset>
     <fieldset class="pix">
         <legend>5% DE DESCONTO</legend>
-        <p data-type="pix"><span>PIX</span></p>
-        <div class="content" style="width: 100%; margin: 0px auto;padding: 0px 0;">
+        <p data-type="pix"  onclick="open_pix(this)"><span>PIX</span></p>
+        <div class="content pix" style="width: 100%; margin: 0px auto;padding: 0px 0;">
             <ul>
                 <li class="load">
                     <div>
@@ -182,8 +182,8 @@
     </fieldset>
     <fieldset class="boleto">
         <legend>3% DE DESCONTO</legend>
-        <p data-type="boleto"><span>BOLETO BANCÁRIO</span></p>
-        <div class="content" style="width: 100%;margin: 0 auto;">
+        <p data-type="boleto"  onclick="open_boleto(this)"><span>BOLETO BANCÁRIO</span></p>
+        <div class="content boleto" style="width: 100%;margin: 0 auto;">
             <ul>
                 <li class="codebar">
                    <div> Você pode pagar o boleto pelo código de barras ou</div>

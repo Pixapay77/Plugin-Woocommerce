@@ -256,7 +256,7 @@ jQuery(document).ready(function(){
     jQuery("input#whatsapp-celular").mask("(99) 9 9999-9999");
     jQuery("input#cep").mask("9999-9999");
 
-    var billing = jQuery("#billing");
+    var billing = jQuery("#billing .seomidia_table");
 
     var html = jQuery('.optionfrete').html()
     html  = html.replace('Entrega','');
@@ -936,3 +936,20 @@ for(var i = 0;i < tab3total;i++){
 
 })
 
+function open_cred_card(a)
+{
+    jQuery('.content').hide();
+    jQuery('.content.cred_card').toggle();
+}
+
+function open_pix(a)
+{
+    jQuery('.content').hide();
+    jQuery('.content.pix').toggle();
+}
+
+function open_boleto(a)
+{
+    jQuery('.content').hide();
+    jQuery('.content.boleto').toggle();
+}

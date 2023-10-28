@@ -14,7 +14,7 @@ $option = get_option('woocommerce_converteme_settings');
                 </div>
                 <div class="col-6 col-md-6">
                     <div class="block-ssl">
-                        <img src="<?php echo plugins_url('woocommerce-converteme')?>/assets/img/Vector-footer.png" alt="" title="" />
+                        <img src="<?php echo plugins_url('woocommerce-plugin')?>/assets/img/Vector-footer.png" alt="" title="" />
                         <div class="ssl-text">
                             PAGAMENTO<br>
                             100% SEGURO

@@ -2,14 +2,14 @@
     <div class="container">
         <div class="row justify-content-center py-3">
             <div class="col-4 col-md-3 text-center">
-                    <img src="<?php echo plugins_url('woocommerce-converteme')?>/assets/img/Vector-footer.png" alt="" title="">
+                    <img src="<?php echo plugins_url('woocommerce-plugin')?>/assets/img/Vector-footer.png" alt="" title="">
                 <div class="block-text-footer">
                 COMPRA<br>
                     <span>SEGURA</span>
                 </div>
             </div>
             <div class="col-4 col-md-3 text-center">
-                <img src="<?php echo plugins_url('woocommerce-converteme')?>/assets/img/digital-footer.png" alt="" title="">
+                <img src="<?php echo plugins_url('woocommerce-plugin')?>/assets/img/digital-footer.png" alt="" title="">
                 <div class="block-text-footer">
                     DADOS<br>
                     <span>PROTEGIDOS</span>

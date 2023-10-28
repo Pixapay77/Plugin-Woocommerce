@@ -12,7 +12,7 @@ class NewPathTemplate
     {
             if (is_checkout()) {
                 if(!is_order_received_page('order-received')){
-                    $page_template =  dirname( path_plugin ) . '/woocommerce-converteme/modelo/seomidia-checkout.php';
+                    $page_template =  dirname( path_plugin ) . '/woocommerce-plugin/modelo/seomidia-checkout.php';
                 }
             }
 
@@ -24,23 +24,23 @@ class NewPathTemplate
         if (is_checkout()) {
 
             if ($template_name == 'checkout/review-order.php') {
-                $template = str_replace(['woocommerce/templates'], ['woocommerce-converteme/templates/woocommerce'], $template);
+                $template = str_replace(['woocommerce/templates'], ['woocommerce-plugin/templates/woocommerce'], $template);
             }
 
             if ($template_name == 'checkout/payment.php') {
-                $template = str_replace(['woocommerce/templates'], ['woocommerce-converteme/templates/woocommerce'], $template);
+                $template = str_replace(['woocommerce/templates'], ['woocommerce-plugin/templates/woocommerce'], $template);
             }
 
             if ($template_name == 'checkout/payment-method.php') {
-                $template = str_replace(['woocommerce/templates'], ['woocommerce-converteme/templates/woocommerce'], $template);
+                $template = str_replace(['woocommerce/templates'], ['woocommerce-plugin/templates/woocommerce'], $template);
             }
 
 //            if ($template_name == 'cart/cart-shipping.php') {
-//                $template = str_replace(['woocommerce/templates'], ['woocommerce-converteme/templates/woocommerce'], $template);
+//                $template = str_replace(['woocommerce/templates'], ['woocommerce-plugin/templates/woocommerce'], $template);
 //            }
 //
 //            if ($template_name == 'art/shipping-calculator.php') {
-//                $template = str_replace(['woocommerce/templates'], ['woocommerce-converteme/templates/woocommerce'], $template);
+//                $template = str_replace(['woocommerce/templates'], ['woocommerce-plugin/templates/woocommerce'], $template);
 //            }
 
         }

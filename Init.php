@@ -7,84 +7,25 @@ use chillerlan\QRCode\QRCode;
 require_once ABSPATH ."/wp-load.php";
 include_once WP_PLUGIN_DIR .'/woocommerce/woocommerce.php';
 
-// wp_enqueue_script('jquery');
-// This will enqueue the Media Uploader script
-function enqueue_media() {
-    if( function_exists( 'wp_enqueue_media' ) ) {
-        wp_enqueue_media();
-    }
-}
+define('path_plugin',ABSPATH . 'wp-content/plugins/woocommerce-plugin/');
 
-add_action('admin_enqueue_scripts', 'enqueue_media');
-
-define('path_plugin',ABSPATH . 'wp-content/plugins/woocommerce-converteme/');
-
-function myblog_unhook_wp_head_footer(){
-    global $wp_filter;
-    if( is_checkout() ) {
-        foreach( $wp_filter['wp_footer'] as $priority => $wp_footer_hooks ) {
-            if( is_array( $wp_footer_hooks ) ) {
-                foreach ( $wp_footer_hooks as $wp_footer_hook ) {
-                    $js_checkout = ['wp_enqueue_global_styles','wp_print_footer_scripts','wp_admin_bar_render'];
-
-                    if(!in_array($wp_footer_hook['function'],$js_checkout))
-                        remove_action( 'wp_footer', $wp_footer_hook['function'], $priority );
-                }
-            }
-        }
-    }
-}
-add_action( 'wp', 'myblog_unhook_wp_head_footer' );
-
-
-function clean_styles(){
-    if(is_checkout() && !is_order_received_page('order-received')){
-        global $wp_styles,$wp_scripts;
-        foreach( $wp_scripts->queue as $script ) :
-            $handle = $wp_scripts->registered[$script]->handle;
-            $js_exception = ['wc-add-to-cart','selectWoo','wc-checkout','woocommerce','wc-cart-fragments','woocommerce-converteme-script','seomidia-checkout-final','seomidia-checkout-sweetalert2','seomidia-checkout-maskedinput','woocommerce_converteme_script_imask','woocommerce_converteme_script_mercadopago','woocommerce_converteme_script','wc-add-to-cart-variation'];
-
-            if( !in_array( $handle, $js_exception ) ){
-                wp_dequeue_script( $handle );
-                wp_deregister_script( $handle );
-            }
-        endforeach;
-
-
-        foreach( $wp_styles->queue as $style ) :
-            $handle = $wp_styles->registered[$style]->handle;
-            $css_exception = ['woocommerce_converteme_style','admin-bar','woocommerce-converteme-script','woocommerce-converteme-bootstrap','woocommerce-converteme-font-awesome','seomidia-checkout-final','seomidia-checkout-sweetalert2','seomidia-checkout-maskedinput','woocommerce-converteme-page'];
-
-            if( !in_array( $handle, $css_exception ) ){
-                wp_dequeue_style( $handle );
-                wp_deregister_style( $handle );
-            }
-        endforeach;
-    }
-}
-add_action( 'wp_enqueue_scripts', "clean_styles", 99999);
-
-
-
-require_once __DIR__ . '/includes/PathTemplate.php';
 require_once __DIR__ . '/includes/scripts.php';
 require_once __DIR__ . '/includes/ajax.php';
-require_once __DIR__ . '/hooks/cart.php';
 
-add_action( 'plugins_loaded', 'Converteme_init' );
-function Converteme_init()
+add_action( 'plugins_loaded', 'Pixapay_init' );
+function Pixapay_init()
 {
 
-    class WC_Converteme_Gateway extends WC_Payment_Gateway
+    class WC_Pixapay_Gateway extends WC_Payment_Gateway
     {
         public $TypePayment;
 
         public function __construct()
         {
-            $this->id = 'converteme'; // payment gateway plugin ID
+            $this->id = 'pixapay'; // payment gateway plugin ID
             $this->icon = ''; // URL of the icon that will be displayed on checkout page near your gateway name
             $this->has_fields = true; // in case you need a custom credit card form
-            $this->method_title = 'Converteme Gateway';
+            $this->method_title = 'Pixapay Gateway';
             $this->method_description = ''; // will be displayed on the options page
 
             // gateways can support subscriptions, refunds, saved payment methods,
@@ -101,7 +42,6 @@ function Converteme_init()
             $this->title = $this->get_option( 'title' );
             $this->description = $this->get_option( 'description' );
             $this->enabled = $this->get_option( 'enabled' );
-            $this->filelogo = $this->get_option( 'filelogo' );
             $this->testmode = 'yes' === $this->get_option( 'testmode' );
             $this->clientid = $this->testmode ? $this->get_option( 'test_client_id' ) : $this->get_option( 'client_id' );
             $this->clientsecret = $this->testmode ? $this->get_option( 'test_client_secret' ) : $this->get_option( 'client_secret' );
@@ -111,17 +51,8 @@ function Converteme_init()
             // This action hook saves the settings
             add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
             add_action( 'woocommerce_checkout_fields', array( $this, 'checkout_billing_fields' ), 9999 );
-
             add_action( 'woocommerce_before_thankyou', array($this,'dados_pagamento'));
-
             add_action( 'woocommerce_admin_order_data_after_billing_address', array($this,'order_cpf_backend'));
-
-
-
-            // We need custom JavaScript to obtain a token
-//                add_action( 'wp_enqueue_scripts', array( $this, 'payment_scripts' ) );
-
-            // You can also register a webhook here
             add_action( 'woocommerce_api_pagamento', array( $this, 'webhook' ) );
         }
 
@@ -130,26 +61,16 @@ function Converteme_init()
             $this->form_fields = array(
                 'enabled' => array(
                     'title'       => 'Ativar/Desativar',
-                    'label'       => 'Ativar Converteme Gateway',
+                    'label'       => 'Ativar Pixapay Gateway',
                     'type'        => 'checkbox',
                     'description' => '',
                     'default'     => 'no'
                 ),
-                'filelogo' => array(
-                    'title'       => 'Logo',
-                    'type'        => 'text',
-                    'description' => '',
-                    'default'     => 'https://converte.me/wp-content/uploads/2021/12/converteme2.png',
-                    'desc_tip'    => true,
-                    'class'       => 'uploadlogo'
-
-                ),
-
                 'title' => array(
                     'title'       => 'Titulo',
                     'type'        => 'text',
                     'description' => 'Nome do metodo de pagamento.',
-                    'default'     => 'Converteme',
+                    'default'     => 'Pixapay',
                     'desc_tip'    => true,
                 ),
                 'description' => array(
@@ -312,14 +233,14 @@ function Converteme_init()
 
                     $this->OrderCreate((object) $body);
 
-                    update_post_meta($order_id,'_converteme_payment_type',$this->TypePayment);
+                    update_post_meta($order_id,'_pixapay_payment_type',$this->TypePayment);
                     if($this->TypePayment == 'boleto'){
-                        update_post_meta($order_id,'_converteme_boleto_barcode',$body["boleto"]["typeful_line"]);
-                        update_post_meta($order_id,'_converteme_boleto_expiration_date',$body["boleto"]["expiration_date"]);
-                        update_post_meta($order_id,'_converteme_boleto_boleto_url',$body["boleto"]['url']);
+                        update_post_meta($order_id,'_pixapay_boleto_barcode',$body["boleto"]["typeful_line"]);
+                        update_post_meta($order_id,'_pixapay_boleto_expiration_date',$body["boleto"]["expiration_date"]);
+                        update_post_meta($order_id,'_pixapay_boleto_boleto_url',$body["boleto"]['url']);
                     }elseif($this->TypePayment == 'pix'){
-                        update_post_meta($order_id,'_converteme_pix_qr_code',$body["pix_qr_code"]);
-                        update_post_meta($order_id,'_converteme_pix_expiration_date',$body["pix_expiration_date"]);
+                        update_post_meta($order_id,'_pixapay_pix_qr_code',$body["pix_qr_code"]);
+                        update_post_meta($order_id,'_pixapay_pix_expiration_date',$body["pix_expiration_date"]);
                     }
 
 
@@ -346,91 +267,7 @@ function Converteme_init()
         {
             extract($dados);
 
-            $items = [];
-            foreach ( $order->get_items() as $item ) {
-                $items[] = [
-                    "id"=> (string) $item->get_product_id(),
-                    "title"=> $item->get_name(),
-                    "unit_price"=> (int) $item->get_total() * 100,
-                    "quantity"=> $item->get_quantity(),
-                    "tangible"=> true
-                ];
-            }
 
-            $metodo = (in_array($brand,['pix','boleto'])) ? $brand : 'credit_card';
-            $cpf = ($cpf == '') ? $billing_cpf : $cpf;
-
-            $payload = [
-                "external_reference" => "{$order->ID}",
-                "cart_amount"     => (int) $order->get_subtotal() * 100,
-                "total_amount"    => (int) $order->get_total() * 100,
-                "shipment_amount" => (int) $order->get_shipping_total() * 100,
-                "soft_descriptor" => get_bloginfo( 'name' ),
-                "customer"        => [
-                    "name"     => $order->get_billing_first_name(),
-                    "email"    => $order->get_billing_email(),
-                    "phone"    => preg_replace('/[^0-9]/', '', $order->get_billing_phone()),
-                    "document" => preg_replace('/[^0-9]/', '', $cpf),
-                    "ip"       => $_SERVER['REMOTE_ADDR']
-                ],
-                "billing"         => [
-                    "street"   => $order->get_billing_address_1(),
-                    "number"=> $billing_number,
-                    "complement" => $order->get_billing_address_2(),
-                    "neighborhood" => $billing_neighborhood,
-                    "city"=> $order->get_billing_city(),
-                    "zipcode"=>preg_replace('/[^0-9]/', '', $order->get_billing_postcode()),
-                    "state"=> $order->get_billing_state(),
-                    "country"=> $order->get_billing_country()
-                ],
-                "shipping"        =>[
-                    "street"   => $order->get_billing_address_1(),
-                    "number"=> $billing_number,
-                    "complement" => $order->get_billing_address_2(),
-                    "neighborhood" => $billing_neighborhood,
-                    "city"=> $order->get_billing_city(),
-                    "zipcode"=>preg_replace('/[^0-9]/', '', $order->get_billing_postcode()),
-                    "state"=> $order->get_billing_state(),
-                    "country"=> $order->get_billing_country()
-                ],
-                "items" => $items,
-                "payment" => [
-                    "method"=> $metodo,
-                    "brand"=>$brand,
-                    "card_holder_name" => $cartName,
-                    "card_expiration_date" => preg_replace('/[^0-9]/', '', $expirationdate),
-                    "card_number" => preg_replace('/[^0-9]/', '', $cardnumber),
-                    "card_cvv" => $securitycode,
-                    "card_token" => $dados['wc-converteme-cardtoken'],
-                    "pix_expiration_date" => $this->Datedue(),
-                    "boleto_instructions" => "Não receber após vencimento",
-                    "boleto_expiration_date"=> $this->Datedue(),
-                    "installments"    => (int) $installments
-                ]
-            ];
-
-            if(in_array($brand,['visa','mastercard','amex','elo','hipercard',''])){
-                unset($payload['payment']['pix_expiration_date']);
-                unset($payload['payment']['boleto_instructions']);
-                unset($payload['payment']['boleto_expiration_date']);
-            }elseif($brand == 'pix'){
-                unset($payload['payment']['card_holder_name']);
-                unset($payload['payment']['card_expiration_date']);
-                unset($payload['payment']['card_number']);
-                unset($payload['payment']['card_cvv']);
-                unset($payload['payment']['boleto_instructions']);
-                unset($payload['payment']['boleto_expiration_date']);
-                unset($payload['payment']['card_token']);
-            }elseif($brand == 'boleto'){
-                unset($payload['payment']['card_holder_name']);
-                unset($payload['payment']['card_expiration_date']);
-                unset($payload['payment']['card_number']);
-                unset($payload['payment']['card_cvv']);
-                unset($payload['payment']['pix_expiration_date']);
-                unset($payload['payment']['card_token']);
-            }
-
-            return json_encode($payload);
         }
         public function  Datedue()
         {
@@ -443,13 +280,7 @@ function Converteme_init()
         }
         public function Token()
         {
-            $hash = base64_encode($this->clientid .':'. $this->clientsecret);
-            $response = wp_remote_post(  $this->EndpointAuth, [
-                'headers' => [
-                    'encrypted-token' => $hash,
-                ]
-            ]);
-            return json_decode($response['body'])->accessToken;
+
         }
         public function checkout_billing_fields( $fields )
         {
@@ -634,16 +465,16 @@ function Converteme_init()
     }
 }
 
-add_filter( 'woocommerce_payment_gateways', 'WC_Converteme_add_gateway_class' );
-function WC_Converteme_add_gateway_class( $gateways ) {
-    $gateways[] = 'WC_Converteme_Gateway'; // your class name is here
+add_filter( 'woocommerce_payment_gateways', 'WC_Pixapay_add_gateway_class' );
+function WC_Pixapay_add_gateway_class( $gateways ) {
+    $gateways[] = 'WC_Pixapay_Gateway'; // your class name is here
     return $gateways;
 }
 
 
 
-add_action('wp_enqueue_scripts', 'woocommerce_converteme_style');
-function woocommerce_converteme_style()
+add_action('wp_enqueue_scripts', 'woocommerce_pixapay_style');
+function woocommerce_pixapay_style()
 {
     wp_enqueue_style('woocommerce_converteme_style',plugin_dir_url(__FILE__) . 'public/assets/css/woocommerce_converteme_style.css',[],false,false);
     wp_enqueue_script('woocommerce_converteme_script_imask','https://cdnjs.cloudflare.com/ajax/libs/imask/3.4.0/imask.min.js',['jquery'],false,false);
