@@ -1,8 +1,8 @@
 <?php
 
 
-require_once 'vendor/autoload.php';
-use chillerlan\QRCode\QRCode;
+// require_once 'vendor/autoload.php';
+// use chillerlan\QRCode\QRCode;
 
 require_once ABSPATH ."/wp-load.php";
 include_once WP_PLUGIN_DIR .'/woocommerce/woocommerce.php';
@@ -26,7 +26,7 @@ function Pixapay_init()
             $this->icon = ''; // URL of the icon that will be displayed on checkout page near your gateway name
             $this->has_fields = true; // in case you need a custom credit card form
             $this->method_title = 'Pixapay Gateway';
-            $this->method_description = ''; // will be displayed on the options page
+            $this->method_description = 'Permite integrar transaçõe da Pixapay com compras woocommerce.'; // will be displayed on the options page
 
             // gateways can support subscriptions, refunds, saved payment methods,
             // but in this tutorial we begin with simple payments
@@ -43,7 +43,7 @@ function Pixapay_init()
             $this->description = $this->get_option( 'description' );
             $this->enabled = $this->get_option( 'enabled' );
             $this->testmode = 'yes' === $this->get_option( 'testmode' );
-            $this->clientid = $this->testmode ? $this->get_option( 'test_client_id' ) : $this->get_option( 'client_id' );
+            $this->idpk     = $this->testmode ? $this->get_option( 'test_idpk' ) : $this->get_option( 'idpk' );
             $this->clientsecret = $this->testmode ? $this->get_option( 'test_client_secret' ) : $this->get_option( 'client_secret' );
             $this->EndpointAuth = $this->testmode ? 'https://apidev.converte.me/api/v1/auth/authorization' : 'https://api.converte.me/api/v1/auth/authorization';
             $this->Endpoint = $this->testmode ? 'https://apidev.converte.me/api/v1/pay/transactions' : 'https://api.converte.me/api/v1/pay/transactions';
@@ -58,6 +58,7 @@ function Pixapay_init()
 
         public function init_form_fields()
         {
+            
             $this->form_fields = array(
                 'enabled' => array(
                     'title'       => 'Ativar/Desativar',
@@ -72,6 +73,26 @@ function Pixapay_init()
                     'description' => 'Nome do metodo de pagamento.',
                     'default'     => 'Pixapay',
                     'desc_tip'    => true,
+                ),
+                'installments' => array(
+                    'title'       => 'Quantidade de Parcelas',
+                    'type'        => 'select',
+                    'options'     => array(
+                        '1' => '1 parcela',
+                        '2' => '2 parcelas',
+                        '3' => '3 parcelas',
+                        '4' => '4 parcelas',
+                        '5' => '5 parcelas',
+                        '6' => '6 parcelas',
+                        '7' => '7 parcelas',
+                        '8' => '8 parcelas',
+                        '9' => '9 parcelas',
+                        '10'=> '10 parcelas',
+                        '11'=> '11 parcelas',
+                        '12'=> '12 parcelas',
+                    ),
+                    'default'     => '1',
+                    'description' => 'Selecione o número de parcelas desejado.',
                 ),
                 'description' => array(
                     'title'       => 'Descrição',
@@ -88,22 +109,24 @@ function Pixapay_init()
                     'desc_tip'    => true,
                 ),
                 'test_client_id' => array(
-                    'title'       => 'Client id teste',
+                    'title'       => 'Empresa idpk (teste)',
                     'type'        => 'text'
                 ),
                 'test_client_secret' => array(
-                    'title'       => 'Client secret teste',
-                    'type'        => 'password',
+                    'title'       => 'Token (teste)',
+                    'type'        => 'text',
                 ),
                 'client_id' => array(
-                    'title'       => 'Client id',
+                    'title'       => 'Empresa idpk',
                     'type'        => 'text'
                 ),
                 'client_secret' => array(
-                    'title'       => 'Client secret',
-                    'type'        => 'password'
+                    'title'       => 'Token',
+                    'type'        => 'text'
                 )
             );
+
+
         }
         public function payment_fields()
         {

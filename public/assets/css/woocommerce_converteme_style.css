@@ -423,9 +423,9 @@
     margin: 25px 10px !important;
 }
 
-#woocommercerConverteme fieldset.cred_card{
+/* #woocommercerConverteme fieldset.cred_card{
     margin-bottom: 20px!important;
-}
+} */
 #woocommercerConverteme fieldset.cred_card.magin-bottom29,
 #woocommercerConverteme fieldset.pix.magin-bottom29,
 #woocommercerConverteme fieldset.boleto.magin-bottom29{
@@ -446,7 +446,7 @@
 }
 
 #woocommercerConverteme fieldset.cred_card p{
-    padding: 10px 5px 0px !important;
+    padding: 0px 5px 0px !important;
     position: relative;
     margin: 4px;
 }
@@ -457,8 +457,8 @@
     font-size: .8em;
     color: #C8C6C6;
     position: absolute;
-    top: 12px;
-    left: 28px
+    top: 4px;
+    left: 34px
 }
 #woocommercerConverteme fieldset.cred_card .title::before{
     content: url("../img/cred-card-off.png");
@@ -469,14 +469,14 @@
     padding-right: 5px!important;
 }
 
-#woocommercerConverteme fieldset.cred_card .title::after{
+/* #woocommercerConverteme fieldset.cred_card .title::after{
     content: url("../img/bandeiras.png");
     position: absolute;
     top: 10px;
     right: 4px;
-}
+} */
 #woocommercerConverteme fieldset.pix p{
-    padding: 12px 8px 0px !important;
+    padding: 8px 8px 8px !important;
     font-family: 'Inter';
     font-style: normal;
     font-weight: 600;
@@ -488,7 +488,7 @@
 }
 #woocommercerConverteme fieldset.pix p::before{
     content: url("../img/pix.png");
-    padding-right: 5px!important;
+    padding: 6px!important;
 }
 
 #woocommercerConverteme fieldset.pix p.active::before{
@@ -497,7 +497,7 @@
 }
 
 #woocommercerConverteme fieldset.boleto p{
-    padding: 17px 11px 0px !important;
+    padding: 14px 11px 11px !important;
     font-family: 'Inter';
     font-style: normal;
     font-weight: 600;
@@ -526,8 +526,8 @@
     line-height: 15px;
     color: #C8C6C6;
     position: absolute;
-    top: 12px;
-    left: 27px
+    top: 9px;
+    left: 37px
 }
 
 #woocommercerConverteme fieldset.boleto p::before{

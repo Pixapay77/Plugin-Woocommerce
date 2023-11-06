@@ -1,11 +1,11 @@
 <?php
     /*
     Plugin Name: Woocommerce Pixapay
-    Plugin URI: https://#
-    Description: Descricao provisoria pixapay.
-    Author: SEO Midia soluções para internet
+    Plugin URI: https://pixapay.com.br/
+    Description: Plugin de pagameto para transações de woocommerce para Pixapay.
+    Author: SEO Midia soluções
     Version: 1.0.0
-    Author URI:
+    Author URI: http://seomidia.com.br/
     */
 
 
