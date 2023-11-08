@@ -318,10 +318,6 @@ function Pixapay_init()
             ));
 
             // FAZ O PAGAMTO da cobrança caso seja cartao
-            if($payment_type == 'credit_card_pixapay'){
-               $this->CreditCartPagar($order_data,$_POST);
-            }
-
 
             try {
                 $this->Body = json_decode($this->Response["body"])->registros[0];
@@ -333,6 +329,7 @@ function Pixapay_init()
                 var_dump($th);
                 exit();
             }
+
 
 
             if( $this->Response["response"]['code'] == 200) {
@@ -349,22 +346,26 @@ function Pixapay_init()
                 update_post_meta($order_id,'_pixapay_payment_type',$this->TypePayment);
 
                 if($this->TypePayment == 'boleto_pixapay'){
-                    update_post_meta($order_id,'_pixapay_boleto_barcode',$this->Body["boleto"]["typeful_line"]);
-                    update_post_meta($order_id,'_pixapay_boleto_expiration_date',$this->Body["boleto"]["expiration_date"]);
-                    update_post_meta($order_id,'_pixapay_boleto_boleto_url',$this->Body["boleto"]['url']);
+                    update_post_meta($order_id,'_pixapay_fmb_link_compartilhamento',$this->Body->fmb_link_compartilhamento);
+                    update_post_meta($order_id,'_pixapay_fmb_linha_digitavel',$this->Body->fmb_linha_digitavel);
+                    update_post_meta($order_id,'_pixapay_fmb_chave',$this->Body->fmb_chave);
+                    update_post_meta($order_id,'_pixapay_fmb_link_url',$this->Body->fmb_link_url);
                 }elseif($this->TypePayment == 'pix_pixapay'){
                     update_post_meta($order_id,'_pixapay_fmp_link_qrcode',$this->Body->fmp_link_qrcode);
                     update_post_meta($order_id,'_pixapay_fmp_link_compartilhamento',$this->Body->fmp_link_compartilhamento);
                     update_post_meta($order_id,'_pixapay_fmp_hash',$this->Body->fmp_hash);
                     update_post_meta($order_id,'_pixapay_pedido_referencia',$this->Body->fmp_chave);
                 }elseif($this->TypePayment == 'credit_card_pixapay'){
-                    update_post_meta($order_id,'_pixapay_cartao_token',$this->Body->cartao_token);
-                    update_post_meta($order_id,'_pixapay_pedido_referencia',$this->Bodyd->fmc_identificador);
+                    update_post_meta($order_id,'_pixapay_pedido_referencia',$this->Body->fmc_identificador);
                 }
 
+                if($payment_type == 'credit_card_pixapay'){
+                    $this->CreditCartPagar($order_data,$_POST);
+                    update_post_meta($order_id,'_pixapay_cartao_token',$this->Bodyd->cartao_token);
+                 }
+    
 
-
-                return array(
+                 return array(
                     'result' => 'success',
                     'redirect' => $this->get_return_url( $order )
                 );
@@ -487,89 +488,109 @@ function Pixapay_init()
         {
 
             $payment_method = $this->get_paymentMethod(get_post_meta($order_id,'_pixapay_payment_type',true));
-            $pixapay_fmp_hash = get_post_meta($order_id,'_pixapay_fmp_hash',true);
-            $_pixapay_fmp_link_qrcode = get_post_meta($order_id,'_pixapay_fmp_link_qrcode',true);
 
-            echo '
-            <script>
-                document.addEventListener("DOMContentLoaded", function() {
-                    const openModalBtn = document.getElementById("openModalBtn");
-                    const modal = document.getElementById("myModal");
-                    const closeModal = document.getElementById("closeModal");
-                
-                    openModalBtn.addEventListener("click", function() {
-                    modal.style.display = "block";
-                    });
-                
-                    closeModal.addEventListener("click", function() {
-                    modal.style.display = "none";
-                    });
-                
-                    window.addEventListener("click", function(event) {
-                    if (event.target === modal) {
+            if($payment_method == 'PIX'){
+                $pixapay_fmp_hash = get_post_meta($order_id,'_pixapay_fmp_hash',true);
+                $_pixapay_fmp_link_qrcode = get_post_meta($order_id,'_pixapay_fmp_link_qrcode',true);
+    
+                echo '
+                <script>
+                    document.addEventListener("DOMContentLoaded", function() {
+                        const openModalBtn = document.getElementById("openModalBtn");
+                        const modal = document.getElementById("myModal");
+                        const closeModal = document.getElementById("closeModal");
+                    
+                        openModalBtn.addEventListener("click", function() {
+                        modal.style.display = "block";
+                        });
+                    
+                        closeModal.addEventListener("click", function() {
                         modal.style.display = "none";
+                        });
+                    
+                        window.addEventListener("click", function(event) {
+                        if (event.target === modal) {
+                            modal.style.display = "none";
+                        }
+                        });
+                    });              
+                </script>
+                <style>
+                    /* Estilo para esconder a janela modal por padrão */
+                    .modal {
+                    display: none;
+                    position: fixed;
+                    z-index: 1;
+                    left: 0;
+                    top: 0;
+                    width: 100%;
+                    height: 100%;
+                    background-color: rgba(0, 0, 0, 0.7);
                     }
-                    });
-                });              
-            </script>
-            <style>
-                /* Estilo para esconder a janela modal por padrão */
-                .modal {
-                display: none;
-                position: fixed;
-                z-index: 1;
-                left: 0;
-                top: 0;
-                width: 100%;
-                height: 100%;
-                background-color: rgba(0, 0, 0, 0.7);
-                }
-
-                /* Estilo para o conteúdo da janela modal */
-                .modal-content {
-                background-color: #fff;
-                margin: 15% auto;
-                padding: 20px;
-                border: 1px solid #888;
-                width: 50%;
-                text-align: center;
-                }
-
-                /* Estilo para o botão de fechar a janela modal */
-                .close {
-                color: #888;
-                float: right;
-                font-size: 24px;
-                cursor: pointer;
-                }
-
-                .close:hover {
-                color: #000;
-                }
-            </style>
-                <div id="myModal" class="modal">
-                    <div class="modal-content">
-                        <span class="close" id="closeModal">&times;</span>
-                        <h2>Pague com QRCODE</h2>
-                        <img src="'.$_pixapay_fmp_link_qrcode.'" style="width: 252px;">
+    
+                    /* Estilo para o conteúdo da janela modal */
+                    .modal-content {
+                    background-color: #fff;
+                    margin: 15% auto;
+                    padding: 20px;
+                    border: 1px solid #888;
+                    width: 50%;
+                    text-align: center;
+                    }
+    
+                    /* Estilo para o botão de fechar a janela modal */
+                    .close {
+                    color: #888;
+                    float: right;
+                    font-size: 24px;
+                    cursor: pointer;
+                    }
+    
+                    .close:hover {
+                    color: #000;
+                    }
+                </style>
+                    <div id="myModal" class="modal">
+                        <div class="modal-content">
+                            <span class="close" id="closeModal">&times;</span>
+                            <h2>Pague com QRCODE</h2>
+                            <img src="'.$_pixapay_fmp_link_qrcode.'" style="width: 252px;">
+                        </div>
                     </div>
-                </div>
-                <h3 class="woocommerce-order-details__title">Detalhes de pagamento</h3>
-                <ul>
-                    <li><strong>Metódo de pagamento:</strong>  '.$payment_method.'</li>
-                    <li><strong>Copie e cole:</strong> <input type="text" name="copiecole" value="'.$pixapay_fmp_hash.'">  <a href="#" onclick="copy();return false;">Clique aqui!</a></li>
-                    <li><strong>Ler QRCODE:</strong>  <a href="#" id="openModalBtn" onclick="return false;" data-action="qrcode">Clique aqui!</a></li>
-                </ul>
-                <br>
-                <hr>
-                <br>
-            ';
+                    <h3 class="woocommerce-order-details__title">Detalhes de pagamento</h3>
+                    <ul>
+                        <li><strong>Metódo de pagamento:</strong>  '.$payment_method.'</li>
+                        <li><strong>Copie e cole:</strong> <input type="text" name="copiecole" value="'.$pixapay_fmp_hash.'">  <a href="#" onclick="copy();return false;">Clique aqui!</a></li>
+                        <li><strong>Ler QRCODE:</strong>  <a href="#" id="openModalBtn" onclick="return false;" data-action="qrcode">Clique aqui!</a></li>
+                    </ul>
+                    <br>
+                    <hr>
+                    <br>
+                ';
+            }elseif ($payment_method == 'BOLETO') {
+                $_pixapay_fmb_link_compartilhamento = get_post_meta($order_id,'_pixapay_fmb_link_compartilhamento',true);
+
+               echo '
+                    <h3 class="woocommerce-order-details__title">Detalhes de pagamento</h3>
+                    <ul>
+                        <li><strong>Metódo de pagamento:</strong>  '.$payment_method.'</li>
+                        <li><strong>Ver Boleto:</strong>  <a target="_blanck" href="'.$_pixapay_fmb_link_compartilhamento.'" >Clique aqui!</a></li>
+                    </ul>
+                    <br>
+                    <hr>
+                    <br>
+                ';
+            }
+
         }
 
         public function get_paymentMethod($data){
             switch ($data) {
                 case 'pix_pixapay':
                     return 'PIX';
+                break;
+                case 'boleto_pixapay':
+                    return 'BOLETO';
                 break;
             }
         }
@@ -728,19 +749,23 @@ function Pixapay_init()
             global $wpdb;
 
             $fmc_identificador = $data->cartao["fmc_identificador"];
-
             $sql = "SELECT post_id FROM {$wpdb->postmeta} where meta_key = '_pixapay_pedido_referencia' AND meta_value = '{$fmc_identificador}'";
+
             $result = $wpdb->get_results($sql);
-            var_dump($result);exit();
 
-            $order_id = $result[0]->post_id;
+            if(count($result) > 0){
+                $order_id = $result[0]->post_id;
 
-            $order = wc_get_order( $order_id );
+                $order = wc_get_order( $order_id );
+    
+                $order->payment_complete();
+                $order->reduce_order_stock();
+                // some notes to customer (replace true with false to make it private)
+                $order->add_order_note( "Pagamento confirmado por Pixapay.\n" . "Codigo de transação: " . $fmc_identificador, true );
+            }else{
+                $order->add_order_note( "erro " . print_r($result), true );
+            }
 
-            $order->payment_complete();
-            $order->reduce_order_stock();
-            // some notes to customer (replace true with false to make it private)
-            $order->add_order_note( "Pagamento confirmado.\n" . "Codigo de transação: " . $fmc_identificador, true );
         }
 
         public function CreditCartPagar($order_data,$POST)
@@ -748,16 +773,17 @@ function Pixapay_init()
 
             $args = $this->PayloadCreditCartPagar($order_data,$POST);
             // var_dump($this->Response);exit;
-            $fmc_idpk = json_decode($this->Response["body"])->registros[0]->fmc_idpk;
-             $this->Response = wp_remote_request( $this->Endpoint . '/Cartao/Pagar/'.$fmc_idpk.'?empresa_idpk=' . $this->idpk, array(
+            $fmc_idpk = $this->Body->fmc_idpk;
+             $Response = wp_remote_request( $this->Endpoint . '/Cartao/Pagar/'.$fmc_idpk.'?empresa_idpk=' . $this->idpk, array(
                 'body' => json_encode($args),
                 'headers' => array(
                     'AUTHORIZATION' => 'Basic ' . $this->clientsecret
                 ),
                 'method'  => 'PUT'
             ));
-            $this->Bodyd = json_decode($this->Response["body"])->registros[0];
-            
+            $this->Bodyd = json_decode($Response["body"]);
+
+
         }
 
         public function PayloadCreditCartPagar($order_data,$POST)
