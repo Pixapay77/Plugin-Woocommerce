@@ -310,14 +310,17 @@ function Pixapay_init()
             /*
              * Your API interaction could be built with wp_remote_post()
               */
+
               $this->Response = wp_remote_post( $this->Url, array(
                 'body' => json_encode($args),
                 'headers' => array(
                     'AUTHORIZATION' => 'Basic ' . $this->clientsecret
-                )
+                ),
+                'timeout' => 15
             ));
 
             // FAZ O PAGAMTO da cobrança caso seja cartao
+
 
             try {
                 $this->Body = json_decode($this->Response["body"])->registros[0];
@@ -326,8 +329,10 @@ function Pixapay_init()
                 }
 
             } catch (\Throwable $th) {
-                var_dump($th);
-                exit();
+                var_dump($this->Response);exit();
+                $msg = $th->getMessage();
+                wc_add_notice(   $msg , 'error' );
+                wp_die();
             }
 
 
@@ -341,22 +346,22 @@ function Pixapay_init()
 
                 $this->TypePayment = $payment_type;
 
-                $this->OrderCreate($order);
+                $this->OrderCreate($order,$order_id);
 
                 update_post_meta($order_id,'_pixapay_payment_type',$this->TypePayment);
 
                 if($this->TypePayment == 'boleto_pixapay'){
                     update_post_meta($order_id,'_pixapay_fmb_link_compartilhamento',$this->Body->fmb_link_compartilhamento);
                     update_post_meta($order_id,'_pixapay_fmb_linha_digitavel',$this->Body->fmb_linha_digitavel);
-                    update_post_meta($order_id,'_pixapay_fmb_chave',$this->Body->fmb_chave);
+                    update_post_meta($order_id,'_pixapay_pedido_referencia',$this->Body->fmb_idpk);
                     update_post_meta($order_id,'_pixapay_fmb_link_url',$this->Body->fmb_link_url);
                 }elseif($this->TypePayment == 'pix_pixapay'){
                     update_post_meta($order_id,'_pixapay_fmp_link_qrcode',$this->Body->fmp_link_qrcode);
                     update_post_meta($order_id,'_pixapay_fmp_link_compartilhamento',$this->Body->fmp_link_compartilhamento);
                     update_post_meta($order_id,'_pixapay_fmp_hash',$this->Body->fmp_hash);
-                    update_post_meta($order_id,'_pixapay_pedido_referencia',$this->Body->fmp_chave);
+                    update_post_meta($order_id,'_pixapay_pedido_referencia',$this->Body->fmp_idpk);
                 }elseif($this->TypePayment == 'credit_card_pixapay'){
-                    update_post_meta($order_id,'_pixapay_pedido_referencia',$this->Body->fmc_identificador);
+                    update_post_meta($order_id,'_pixapay_pedido_referencia',$this->Body->fmc_idpk);
                 }
 
                 if($payment_type == 'credit_card_pixapay'){
@@ -407,10 +412,6 @@ function Pixapay_init()
 
             return date('Y-m-d',mktime(0,0,0,$mes,$dia+5,$ano));
         }
-        public function Token()
-        {
-
-        }
         public function checkout_billing_fields( $fields )
         {
             if ( !isset(  $fields['billing']['billing_neighborhood'] ) ) {
@@ -459,11 +460,12 @@ function Pixapay_init()
         {
 
             if($this->TypePayment == "boleto_pixapay"){
-                $description =  "Aguardando pagamento por boleto. \n" . "Link boleto <a target='_blanck' href='".$link_boleto."'>" . $link_boleto . '</a>';
+                $description =  "Aguardando pagamento por Pixapay - boleto. \n";
             }elseif($this->TypePayment== "credit_card_pixapay"){
+                $ref = get_post_meta($order_id,'_pixapay_pedido_referencia',true);
                 $description = "Aguardando pagamento por Pixapay - Cartão de credito.";
             }elseif($this->TypePayment == "pix_pixapay"){
-                $description = "Aguardando pagamento por PIX.\n" . ' qrcode url: ' . $pix_qrCodeUrl;
+                $description = "Aguardando pagamento por Pixapay -  PIX.";
             }
 
             // some notes to customer (replace true with false to make it private)
@@ -475,7 +477,7 @@ function Pixapay_init()
                 case 'pix':
                     $this->LiquidacaoPix($data);
                 break;
-                case 'boleto':
+                case 'bolepix':
                     $this->LiquidacaoBoleto($data);
                 break;
                 case 'cartao':
@@ -729,9 +731,9 @@ function Pixapay_init()
         {
             global $wpdb;
 
-            $fmp_chave = $data->pix["fmp_chave"];
+            $fmc_identificador = $data->pix["fmp_idpk"];
+            $sql = "SELECT post_id FROM {$wpdb->postmeta} where meta_key = '_pixapay_pedido_referencia' AND meta_value = '{$fmc_identificador}'";
 
-            $sql = "SELECT post_id FROM {$wpdb->postmeta} where meta_key = '_pixapay_pedido_referencia' AND meta_value = '{$fmp_chave}'";
             $result = $wpdb->get_results($sql);
 
             $order_id = $result[0]->post_id;
@@ -741,14 +743,35 @@ function Pixapay_init()
             $order->payment_complete();
             $order->reduce_order_stock();
             // some notes to customer (replace true with false to make it private)
-            $order->add_order_note( "Pagamento confirmado.\n" . "Codigo de transação: " . $fmp_chave, true );
+            $order->add_order_note( "Pagamento confirmado por Pixapay.\n Código #" . $fmc_identificador , true );
         }
+
+        public function LiquidacaoBoleto($data)
+        {
+            global $wpdb;
+
+
+            $fmc_identificador = $data->pix["boleto"]["fmb_idpk"];
+            $sql = "SELECT post_id FROM {$wpdb->postmeta} where meta_key = '_pixapay_pedido_referencia' AND meta_value = '{$fmc_identificador}'";
+
+            $result = $wpdb->get_results($sql);
+
+            $order_id = $result[0]->post_id;
+
+            $order = wc_get_order( $order_id );
+
+            $order->payment_complete();
+            $order->reduce_order_stock();
+            // some notes to customer (replace true with false to make it private)
+            $order->add_order_note( "Pagamento confirmado por Pixapay.\n Código #" . $fmc_identificador , true );
+        }
+
 
         public function LiquidacaoCreditCart($data)
         {
             global $wpdb;
 
-            $fmc_identificador = $data->cartao["fmc_identificador"];
+            $fmc_identificador = $data->cartao["fmc_idpk"];
             $sql = "SELECT post_id FROM {$wpdb->postmeta} where meta_key = '_pixapay_pedido_referencia' AND meta_value = '{$fmc_identificador}'";
 
             $result = $wpdb->get_results($sql);
@@ -761,12 +784,14 @@ function Pixapay_init()
                 $order->payment_complete();
                 $order->reduce_order_stock();
                 // some notes to customer (replace true with false to make it private)
-                $order->add_order_note( "Pagamento confirmado por Pixapay.\n" . "Codigo de transação: " . $fmc_identificador, true );
+                $order->add_order_note( "Pagamento confirmado por Pixapay.\n Código #" . $fmc_identificador, true );
             }else{
                 $order->add_order_note( "erro " . print_r($result), true );
             }
 
         }
+
+
 
         public function CreditCartPagar($order_data,$POST)
         {
@@ -779,7 +804,8 @@ function Pixapay_init()
                 'headers' => array(
                     'AUTHORIZATION' => 'Basic ' . $this->clientsecret
                 ),
-                'method'  => 'PUT'
+                'method'  => 'PUT',
+                'timeout' => 15
             ));
             $this->Bodyd = json_decode($Response["body"]);
 
