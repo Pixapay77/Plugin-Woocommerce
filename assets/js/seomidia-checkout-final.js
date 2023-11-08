@@ -966,16 +966,28 @@ function open_cred_card(a)
 {
     jQuery('.content').hide();
     jQuery('.content.cred_card').toggle();
+    jQuery('input[name="payment_type"]').val('credit_card_pixapay');
 }
 
 function open_pix(a)
 {
     jQuery('.content').hide();
     jQuery('.content.pix').toggle();
+    jQuery('input[name="payment_type"]').val('pix_pixapay');
 }
 
 function open_boleto(a)
 {
     jQuery('.content').hide();
     jQuery('.content.boleto').toggle();
+    jQuery('input[name="payment_type"]').val('boleto_pixapay');
+}
+
+function copy()
+{
+    var input = jQuery('input[name="copiecole"]');
+    input.select(); // Seleciona o texto no input
+    document.execCommand("copy"); // Copia o texto selecionado para a área de transferência
+    window.getSelection().removeAllRanges(); // Deseleciona o texto
+    jQuery(this).text("Texto Copiado!");
 }

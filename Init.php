@@ -1,17 +1,5 @@
 <?php
 
-
-// require_once 'vendor/autoload.php';
-// use chillerlan\QRCode\QRCode;
-
-require_once ABSPATH ."/wp-load.php";
-include_once WP_PLUGIN_DIR .'/woocommerce/woocommerce.php';
-
-define('path_plugin',ABSPATH . 'wp-content/plugins/woocommerce-plugin/');
-
-require_once __DIR__ . '/includes/scripts.php';
-require_once __DIR__ . '/includes/ajax.php';
-
 add_action( 'plugins_loaded', 'Pixapay_init' );
 function Pixapay_init()
 {
@@ -19,6 +7,10 @@ function Pixapay_init()
     class WC_Pixapay_Gateway extends WC_Payment_Gateway
     {
         public $TypePayment;
+        public $Url;
+        protected $Response;
+        public $Body;
+        public $Bodyd;
 
         public function __construct()
         {
@@ -43,23 +35,28 @@ function Pixapay_init()
             $this->description = $this->get_option( 'description' );
             $this->enabled = $this->get_option( 'enabled' );
             $this->testmode = 'yes' === $this->get_option( 'testmode' );
-            $this->idpk     = $this->testmode ? $this->get_option( 'test_idpk' ) : $this->get_option( 'idpk' );
+            $this->idpk     = $this->testmode ? $this->get_option( 'test_client_id' ) : $this->get_option( 'client_id' );
             $this->clientsecret = $this->testmode ? $this->get_option( 'test_client_secret' ) : $this->get_option( 'client_secret' );
-            $this->EndpointAuth = $this->testmode ? 'https://apidev.converte.me/api/v1/auth/authorization' : 'https://api.converte.me/api/v1/auth/authorization';
-            $this->Endpoint = $this->testmode ? 'https://apidev.converte.me/api/v1/pay/transactions' : 'https://api.converte.me/api/v1/pay/transactions';
+            $this->Endpoint = $this->testmode ? 'https://sandbox.tecno.mobi/api/v1' : 'https://sandbox.tecno.mobi/api/v1';
+            $this->webhook_url =  $this->testmode ? 'https://6607-2001-1284-f50f-caf9-e199-56a0-336c-2204.ngrok-free.app' : get_option('home');
 
             // This action hook saves the settings
             add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
             add_action( 'woocommerce_checkout_fields', array( $this, 'checkout_billing_fields' ), 9999 );
             add_action( 'woocommerce_before_thankyou', array($this,'dados_pagamento'));
             add_action( 'woocommerce_admin_order_data_after_billing_address', array($this,'order_cpf_backend'));
-            add_action( 'woocommerce_api_pagamento', array( $this, 'webhook' ) );
+            add_action( 'woocommerce_api_webhook_pagamento', array( $this, 'webhook' ) );
         }
 
         public function init_form_fields()
         {
             
             $this->form_fields = array(
+                'section_general' => array(
+                    'type' => 'title',
+                    'title' => 'Configurações Gerais',
+                ),
+
                 'enabled' => array(
                     'title'       => 'Ativar/Desativar',
                     'label'       => 'Ativar Pixapay Gateway',
@@ -73,6 +70,17 @@ function Pixapay_init()
                     'description' => 'Nome do metodo de pagamento.',
                     'default'     => 'Pixapay',
                     'desc_tip'    => true,
+                ),
+                'description' => array(
+                    'title'       => 'Descrição',
+                    'type'        => 'textarea',
+                    'description' => 'Descricao do servico de pagamento.',
+                    'default'     => 'Descricao do servico de pagamento.',
+                ),
+
+                'section_credit_card' => array(
+                    'type' => 'title',
+                    'title' => 'Configurações Cartão de Credito',
                 ),
                 'installments' => array(
                     'title'       => 'Quantidade de Parcelas',
@@ -94,12 +102,89 @@ function Pixapay_init()
                     'default'     => '1',
                     'description' => 'Selecione o número de parcelas desejado.',
                 ),
-                'description' => array(
-                    'title'       => 'Descrição',
-                    'type'        => 'textarea',
-                    'description' => 'Descricao do servico de pagamento.',
-                    'default'     => 'Descricao do servico de pagamento.',
+
+                'credcartdiasvecimto' => array(
+                    'title'       => 'Tempo expiração do Cobrança',
+                    'type'        => 'number',
+                    'description' => 'Tempo de validade da Cobrança após ser criado! Tempo deve ser informado  minutos.',
+                    'default'     => 0,
+                    'desc_tip'    => true,
                 ),
+
+                'section_apix' => array(
+                    'type' => 'title',
+                    'title' => 'Configurações pix',
+                ),
+
+                'pixexpire' => array(
+                    'title'       => 'Tempo expiração do Pix',
+                    'type'        => 'number',
+                    'description' => 'Tempo de validade do pix após ser criado! Tempo deve ser informado  minutos.',
+                    'default'     => 0,
+                    'desc_tip'    => true,
+                ),
+
+                'section_boleto' => array(
+                    'type' => 'title',
+                    'title' => 'Configurações Boleto',
+                ),
+
+                'boletoinstrucao' => array(
+                    'title'       => 'Instrução para pagamento',
+                    'type'        => 'text',
+                    'description' => 'Deixe aqui uma msag para seus boletos',
+                    'default'     => 0,
+                    'desc_tip'    => true,
+                ),
+
+                'boletodiasvecimto' => array(
+                    'title'       => 'Vencimento em dias',
+                    'type'        => 'number',
+                    'description' => 'Dias de validade após a criação do Boleto',
+                    'default'     => 0,
+                    'desc_tip'    => true,
+                ),
+
+                'boletotipodesconto' => array(
+                    'title'       => 'Tipo desconto',
+                    'type'        => 'select',
+                    'options'     => array(
+                        '%' => '%',
+                    ),
+                    'default'     => '1',
+                    'description' => 'Selecione o tipo desconto.',
+                ),
+
+                'boletodesconto' => array(
+                    'title'       => 'Deconto%',
+                    'type'        => 'number',
+                    'description' => 'Desconto no pagamento Boleto',
+                    'default'     => 0,
+                    'desc_tip'    => true,
+                ),
+
+                'boletomulta' => array(
+                    'title'       => 'Multa%',
+                    'type'        => 'number',
+                    'description' => 'Multa no atraso do pagamento Boleto',
+                    'default'     => 0,
+                    'desc_tip'    => true,
+                ),
+
+                'boletojuros' => array(
+                    'title'       => 'Juros%',
+                    'type'        => 'number',
+                    'description' => 'Juros no atraso do pagamento Boleto',
+                    'default'     => 0,
+                    'desc_tip'    => true,
+                ),
+
+
+                'section_auth' => array(
+                    'type' => 'title',
+                    'title' => 'Configurações Autenticação e ambiente',
+                ),
+
                 'testmode' => array(
                     'title'       => 'Modo de teste',
                     'label'       => 'Ativar modo teste',
@@ -206,91 +291,111 @@ function Pixapay_init()
         {
             global $woocommerce;
 
+            extract($_POST);
 
             // we need it to get any order detailes
             $order = wc_get_order( $order_id );
             $order_data = $order->get_data(); // The Order data
             $user_id = $order_data['customer_id'];
 
+
             update_user_meta( $user_id, 'billing_cpf', $_POST['billing_cpf'] );
-
-
 
             /*
               * Array with parameters for API interaction
              */
 
-            if(($order->get_total() / $_POST[ 'installments' ]) < 5) {
-                wc_add_notice(  'Valor minimo por parcela e R$ 5,00', 'error' );
-                return false;
-            }
-
-
-            $args = $this->Payload($order,$_POST);
+            $args = $this->Payload($order_data,$_POST);
 
             /*
              * Your API interaction could be built with wp_remote_post()
               */
-
-            $response = wp_remote_post( $this->Endpoint, array(
-                'body' => $args,
+              $this->Response = wp_remote_post( $this->Url, array(
+                'body' => json_encode($args),
                 'headers' => array(
-                    'AUTHORIZATION' => 'Bearer ' . $this->Token(),
-                    'Content-Type' => 'application/json'
+                    'AUTHORIZATION' => 'Basic ' . $this->clientsecret
                 )
             ));
 
-
-            $body = json_decode( $response['body'], true );
-
-
-            if( !is_wp_error( $response ) && $response["response"]["code"] == 200) {
-                // it could be different depending on your payment processor
-                if ( isset($body['transaction']) && $body['transaction'] != '' ) {
-
-                    // Empty cart
-                    $woocommerce->cart->empty_cart();
-
-                    // Redirect to the thank you page
-                    $this->TypePayment = $body["payment_method"];
-
-                    $this->OrderCreate((object) $body);
-
-                    update_post_meta($order_id,'_pixapay_payment_type',$this->TypePayment);
-                    if($this->TypePayment == 'boleto'){
-                        update_post_meta($order_id,'_pixapay_boleto_barcode',$body["boleto"]["typeful_line"]);
-                        update_post_meta($order_id,'_pixapay_boleto_expiration_date',$body["boleto"]["expiration_date"]);
-                        update_post_meta($order_id,'_pixapay_boleto_boleto_url',$body["boleto"]['url']);
-                    }elseif($this->TypePayment == 'pix'){
-                        update_post_meta($order_id,'_pixapay_pix_qr_code',$body["pix_qr_code"]);
-                        update_post_meta($order_id,'_pixapay_pix_expiration_date',$body["pix_expiration_date"]);
-                    }
+            // FAZ O PAGAMTO da cobrança caso seja cartao
+            if($payment_type == 'credit_card_pixapay'){
+               $this->CreditCartPagar($order_data,$_POST);
+            }
 
 
-
-                    return array(
-                        'result' => 'success',
-                        'redirect' => $this->get_return_url( $order )
-                    );
-
-                } else {
-                    wc_add_notice(  'Algo errado em sua transação, entre em contato.', 'error' );
-                    return;
+            try {
+                $this->Body = json_decode($this->Response["body"])->registros[0];
+                if(is_null($this->Body)){
+                    $this->Body =  json_decode($this->Response["body"]);
                 }
 
-            }elseif($body["statusCode"] == 400){
-                $msg = (is_array($body["errors"][0])) ? $body["errors"][0]['messages'] : $body["errors"][0];
-                wc_add_notice(  $body['statusText'] .': '. $msg , 'error' );
-            } else {
-                $msg = (is_array($body["errors"][0])) ? $body["errors"][0]['messages'] : $body["errors"][0];
-                wc_add_notice(  $body['statusText'] .': '. $msg , 'error' );
+            } catch (\Throwable $th) {
+                var_dump($th);
+                exit();
             }
+
+
+            if( $this->Response["response"]['code'] == 200) {
+
+                // Empty cart
+                 $woocommerce->cart->empty_cart();
+
+                // Redirect to the thank you page
+
+                $this->TypePayment = $payment_type;
+
+                $this->OrderCreate($order);
+
+                update_post_meta($order_id,'_pixapay_payment_type',$this->TypePayment);
+
+                if($this->TypePayment == 'boleto_pixapay'){
+                    update_post_meta($order_id,'_pixapay_boleto_barcode',$this->Body["boleto"]["typeful_line"]);
+                    update_post_meta($order_id,'_pixapay_boleto_expiration_date',$this->Body["boleto"]["expiration_date"]);
+                    update_post_meta($order_id,'_pixapay_boleto_boleto_url',$this->Body["boleto"]['url']);
+                }elseif($this->TypePayment == 'pix_pixapay'){
+                    update_post_meta($order_id,'_pixapay_fmp_link_qrcode',$this->Body->fmp_link_qrcode);
+                    update_post_meta($order_id,'_pixapay_fmp_link_compartilhamento',$this->Body->fmp_link_compartilhamento);
+                    update_post_meta($order_id,'_pixapay_fmp_hash',$this->Body->fmp_hash);
+                    update_post_meta($order_id,'_pixapay_pedido_referencia',$this->Body->fmp_chave);
+                }elseif($this->TypePayment == 'credit_card_pixapay'){
+                    update_post_meta($order_id,'_pixapay_cartao_token',$this->Body->cartao_token);
+                    update_post_meta($order_id,'_pixapay_pedido_referencia',$this->Bodyd->fmc_identificador);
+                }
+
+
+
+                return array(
+                    'result' => 'success',
+                    'redirect' => $this->get_return_url( $order )
+                );
+            }elseif($body["status"] == 'erro'){
+                $msg = $body["mensagem"];
+                wc_add_notice(  $body['status'] .': '. $msg , 'error' );
+            } else {
+                $msg = $body["mensagem"];
+                wc_add_notice(  $body['status'] .': '. $msg , 'error' );
+            }
+        }
+        
+        protected function get_response()
+        {
+            return json_decode($this->Response["body"]);
         }
         public function Payload($order,$dados)
         {
             extract($dados);
 
-
+            switch ($payment_type) {
+                case 'credit_card_pixapay':
+                    return $this->PayloadCreditCardCreate($order,$dados);
+                break;
+                case 'pix_pixapay':
+                    return $this->PayloadPix($order,$dados);
+                break;
+                case 'boleto_pixapay':
+                    return $this->PayloadBoleto($order,$dados);
+                break;
+            }
         }
         public function  Datedue()
         {
@@ -349,22 +454,14 @@ function Pixapay_init()
             $this->OrderReturn((object) $data);
             exit();
         }
-        public function OrderCreate($data)
+        public function OrderCreate($order)
         {
-            $transition     = $data->transaction;
-            $status         = $data->status;
-            $order_id       = $data->external_reference;
-            $payment_method = $data->payment_method;
-            $link_boleto    = $data->boleto['url'];
-            $pix_qrCodeUrl  = $data->pix_qr_code;
 
-            $order = wc_get_order( $order_id );
-
-            if($payment_method == "boleto"){
+            if($this->TypePayment == "boleto_pixapay"){
                 $description =  "Aguardando pagamento por boleto. \n" . "Link boleto <a target='_blanck' href='".$link_boleto."'>" . $link_boleto . '</a>';
-            }elseif($payment_method == "credit_card"){
-                $description = "Aguardando pagamento por Cartão de credito.";
-            }elseif($payment_method == "pix"){
+            }elseif($this->TypePayment== "credit_card_pixapay"){
+                $description = "Aguardando pagamento por Pixapay - Cartão de credito.";
+            }elseif($this->TypePayment == "pix_pixapay"){
                 $description = "Aguardando pagamento por PIX.\n" . ' qrcode url: ' . $pix_qrCodeUrl;
             }
 
@@ -373,118 +470,321 @@ function Pixapay_init()
         }
         public function OrderReturn($data)
         {
+            switch ($data->tipo_cobranca) {
+                case 'pix':
+                    $this->LiquidacaoPix($data);
+                break;
+                case 'boleto':
+                    $this->LiquidacaoBoleto($data);
+                break;
+                case 'cartao':
+                    $this->LiquidacaoCreditCart($data);
+                break;
+            }
+        }
 
-            $transition     = $data->resource['id'];
-            $status         = $data->resource['status'];
-            $order_id       = $data->resource['reference_id'];
-            $payment_method = $data->resource['payment_method']['type'];
-            $link_boleto    = $data->resource['link'];
+        public function dados_pagamento($order_id) 
+        {
+
+            $payment_method = $this->get_paymentMethod(get_post_meta($order_id,'_pixapay_payment_type',true));
+            $pixapay_fmp_hash = get_post_meta($order_id,'_pixapay_fmp_hash',true);
+            $_pixapay_fmp_link_qrcode = get_post_meta($order_id,'_pixapay_fmp_link_qrcode',true);
+
+            echo '
+            <script>
+                document.addEventListener("DOMContentLoaded", function() {
+                    const openModalBtn = document.getElementById("openModalBtn");
+                    const modal = document.getElementById("myModal");
+                    const closeModal = document.getElementById("closeModal");
+                
+                    openModalBtn.addEventListener("click", function() {
+                    modal.style.display = "block";
+                    });
+                
+                    closeModal.addEventListener("click", function() {
+                    modal.style.display = "none";
+                    });
+                
+                    window.addEventListener("click", function(event) {
+                    if (event.target === modal) {
+                        modal.style.display = "none";
+                    }
+                    });
+                });              
+            </script>
+            <style>
+                /* Estilo para esconder a janela modal por padrão */
+                .modal {
+                display: none;
+                position: fixed;
+                z-index: 1;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.7);
+                }
+
+                /* Estilo para o conteúdo da janela modal */
+                .modal-content {
+                background-color: #fff;
+                margin: 15% auto;
+                padding: 20px;
+                border: 1px solid #888;
+                width: 50%;
+                text-align: center;
+                }
+
+                /* Estilo para o botão de fechar a janela modal */
+                .close {
+                color: #888;
+                float: right;
+                font-size: 24px;
+                cursor: pointer;
+                }
+
+                .close:hover {
+                color: #000;
+                }
+            </style>
+                <div id="myModal" class="modal">
+                    <div class="modal-content">
+                        <span class="close" id="closeModal">&times;</span>
+                        <h2>Pague com QRCODE</h2>
+                        <img src="'.$_pixapay_fmp_link_qrcode.'" style="width: 252px;">
+                    </div>
+                </div>
+                <h3 class="woocommerce-order-details__title">Detalhes de pagamento</h3>
+                <ul>
+                    <li><strong>Metódo de pagamento:</strong>  '.$payment_method.'</li>
+                    <li><strong>Copie e cole:</strong> <input type="text" name="copiecole" value="'.$pixapay_fmp_hash.'">  <a href="#" onclick="copy();return false;">Clique aqui!</a></li>
+                    <li><strong>Ler QRCODE:</strong>  <a href="#" id="openModalBtn" onclick="return false;" data-action="qrcode">Clique aqui!</a></li>
+                </ul>
+                <br>
+                <hr>
+                <br>
+            ';
+        }
+
+        public function get_paymentMethod($data){
+            switch ($data) {
+                case 'pix_pixapay':
+                    return 'PIX';
+                break;
+            }
+        }
+
+        public function PayloadPix($order,$dados)
+        {
+            extract($dados);
+
+            $settings = get_option( 'woocommerce_pixapay_settings' );
+            $this->Url = $this->Endpoint . '/Pix/Instantaneo?empresa_idpk=' . $this->idpk;
+            
+            $expirepix = $this->expirepix();
+
+
+            return [
+                "fmp_descricao"     => 'WC Pedido - ' . $billing_first_name .' '. $billing_last_name,        
+                "fmp_valor"         => $order['total'],
+                "fmp_data_expicarao"=> $expirepix,
+                "fmp_webhook"       =>  $this->webhook_url . '/wc-api/webhook_pagamento',
+                "fmp_idpk"          => (string) $order["id"]
+            ];
+
+        }
+
+        public function PayloadBoleto($order,$dados)
+        {
+            extract($dados);
+            $settings = get_option( 'woocommerce_pixapay_settings' );
+
+            $this->Url = $this->Endpoint . '/Boleto/Inserir?empresa_idpk=' . $this->idpk;
+            
+            $vencimento = $this->vencimento();
+
+
+            return [
+                "fmb_sacado_nome"                   => $billing_first_name .' '. $billing_last_name,
+                "fmb_sacado_cnpj_cpf"               => $billing_cpf,    
+                "fmb_sacado_endereco"               => $billing_address_1,
+                "fmb_sacado_endereco_numero"        => $billing_number,
+                "fmb_sacado_endereco_complemento"   => $billing_address_2,
+                "fmb_sacado_bairro"                 => $billing_neighborhood,
+                "fmb_sacado_cep"                    => $billing_postcode,
+                "fmb_sacado_cidade"                 => $billing_city,
+                "fmb_sacado_uf"                     => $billing_state,    
+                "fmb_valor"                         => (double) $order['total'],
+                "fmb_vencimento"                    => $vencimento,        
+                "fmb_referencia"                    => "VENDA-" . $order["id"],
+                "fmb_instrucao"                     => $settings['boletoinstrucao'],
+                "fmb_desconto_tipo"                 => $settings['boletotipodesconto'],
+                "fmb_desconto_valor"                => $settings['boletodesconto'],
+                "fmb_juros_mensal"                  => $settings['boletojuros'],
+                "fmb_multa"                         => $settings['boletomulta'],
+                "fmb_idpk"                          => (string) $order["id"],
+            ];
+
+        }
+
+        public function PayloadCreditCardCreate($order,$dados)
+        {
+            extract($dados);
+            $settings = get_option( 'woocommerce_pixapay_settings' );
+
+            $this->Url = $this->Endpoint . '/Cartao/Inserir?empresa_idpk=' . $this->idpk;
+            
+            $expiracao = $this->expiracaoCreditCart();
+
+           return [
+                "fmc_descricao"=> "Venda". $order["id"],
+                "fmc_cliente_nome"=> $billing_first_name .' '. $billing_last_name,
+                "fmc_cliente_documento"=> $billing_cpf,        
+                "fmc_qtde_parcelas"=> $installments,
+                "fmc_valor"=> (double) $order['total'],
+                "fmc_data_expiracao"=> $expiracao
+           ];
+        }
+
+
+        public function expirepix()
+        {
+            $settings = get_option( 'woocommerce_pixapay_settings' );
+            // Data no formato "Y-m-d H:i:s"
+            $data = date('Y-m-d H:i:s');
+
+            // Crie um objeto DateTime a partir da string da data
+            $dataHora = new DateTime($data);
+
+            // Adicione 5 minutos
+            $dataHora->add(new DateInterval('PT'.$settings['pixexpire'].'M'));
+
+            // Obtenha a nova data no mesmo formato
+            $novaData = $dataHora->format('d/m/Y H:i:s');
+
+            return $novaData;
+
+        }
+
+        public function expiracaoCreditCart()
+        {
+            $settings = get_option( 'woocommerce_pixapay_settings' );
+            // Data no formato "Y-m-d H:i:s"
+            $data = date('Y-m-d H:i:s');
+
+            // Crie um objeto DateTime a partir da string da data
+            $dataHora = new DateTime($data);
+
+            // Adicione 5 minutos
+            $dataHora->add(new DateInterval('P'.$settings['credcartdiasvecimto'].'D'));
+
+            // Obtenha a nova data no mesmo formato
+            $novaData = $dataHora->format('d/m/Y');
+
+            return $novaData;
+
+        }
+
+        public function vencimento()
+        {
+            $settings = get_option( 'woocommerce_pixapay_settings' );
+            // Data no formato "Y-m-d H:i:s"
+            $data = date('Y-m-d H:i:s');
+
+            // Crie um objeto DateTime a partir da string da data
+            $dataHora = new DateTime($data);
+
+            // Adicione 5 minutos
+            $dataHora->add(new DateInterval('P'.$settings['boletodiasvecimto'].'D'));
+
+            // Obtenha a nova data no mesmo formato
+            $novaData = $dataHora->format('d/m/Y');
+
+            return $novaData;
+
+        }
+
+        public function LiquidacaoPix($data)
+        {
+            global $wpdb;
+
+            $fmp_chave = $data->pix["fmp_chave"];
+
+            $sql = "SELECT post_id FROM {$wpdb->postmeta} where meta_key = '_pixapay_pedido_referencia' AND meta_value = '{$fmp_chave}'";
+            $result = $wpdb->get_results($sql);
+
+            $order_id = $result[0]->post_id;
 
             $order = wc_get_order( $order_id );
 
-
-            if($status == 'approved'){
-                $order->payment_complete();
-                $order->reduce_order_stock();
-                // some notes to customer (replace true with false to make it private)
-                $order->add_order_note( "Pagamento confirmado.\n" . "Codigo de transação: " . $transition, true );
-            }elseif($status == 'waiting_payment'){
-                // some notes to customer (replace true with false to make it private)
-                $order->add_order_note( 'Aguardando pagamento.', true );
-            }
+            $order->payment_complete();
+            $order->reduce_order_stock();
+            // some notes to customer (replace true with false to make it private)
+            $order->add_order_note( "Pagamento confirmado.\n" . "Codigo de transação: " . $fmp_chave, true );
         }
-        public function dados_pagamento($order_id) 
+
+        public function LiquidacaoCreditCart($data)
         {
-            $TypePayment = get_post_meta($order_id,'_converteme_payment_type',true);
-            if($TypePayment == 'credit_card') return;
+            global $wpdb;
 
-            $code   = get_post_meta($order_id,'_converteme_pix_qr_code',true);
-            $base64 = '';
-            if($code != '')
-                $base64 = (new QRCode)->render($code);
-            $pix = '
-                        <td class="woocommerce-table__product-name product-name" style="text-align: center">
-                            <div id="converteme-pix">
-                            Utilize o QRCode e pague o PIX pelo celular
-                                <img src="'.$base64.'" />
-                            </div>
-                        </td>
-                        <td class="woocommerce-table__product-name product-name" style="text-align: center">
-                            <div id="converteme-pix-codigo">
-                                <label>Código de pagamento</label><br>
-                                <input type="text" id="codepix" value="'.get_post_meta($order_id,'_converteme_pix_qr_code',true).'">
-                                <br><span>Copiar código</span>
-                             </div>
-                        </td>
-                        <td class="woocommerce-table__product-name product-name" style="text-align: center">
-                            Vencimento
-                            '.get_post_meta($order_id,'_converteme_pix_expiration_date',true).'
-                        </td>
-                    ';
+            $fmc_identificador = $data->cartao["fmc_identificador"];
 
-            $boleto = '
-                        <td colspan="2" class="woocommerce-table__product-name product-name" style="text-align: center">
-                            <div id="converteme-pix-codigo">
-                                <label>Boleto</label><br>
-                                <a target="_blank" href="'.get_post_meta($order_id,'_converteme_boleto_boleto_url',true).'">Abrir boleto</a>
-                             </div>
-                        </td>
-                        <td class="woocommerce-table__product-name product-name" style="text-align: center">
-                            Vencimento<br>
-                            '.get_post_meta($order_id,'_converteme_boleto_expiration_date',true).'
-                        </td>
-                    ';
+            $sql = "SELECT post_id FROM {$wpdb->postmeta} where meta_key = '_pixapay_pedido_referencia' AND meta_value = '{$fmc_identificador}'";
+            $result = $wpdb->get_results($sql);
+            var_dump($result);exit();
 
-            $typePayment = ($TypePayment == 'pix') ? $pix : $boleto;
+            $order_id = $result[0]->post_id;
 
-            $html = '
-                           <p class="woocommerce-notice woocommerce-notice--success woocommerce-thankyou-order-received">Detalhes para pagamento.</p>
-                           <table class="woocommerce-table woocommerce-table--order-details shop_table order_details">
-                                <tr class="woocommerce-table__line-item order_item">
-                                     '.$typePayment.'
-                                </tr>
-                            </table> 
-                            <style>
-                                #converteme-pix{
-                                     width: 203px;
-                                     padding: 15px;
-                                     font-size: 12px;
-                                }
-                                #converteme-boleto{
-                                     width: 203px;
-                                     padding: 15px
-                                }
-                                #converteme-boleto a{
-                                    line-height: 12px;
-                                    white-space: normal;
-                                    font-weight: 700;
-                                    text-align: center;
-                                    text-transform: uppercase;
-                                    font-size: 14px;
-                                    color: #149221;
-                                    background-color: #e5ebe0;
-                                    padding: 6px;
-                                    margin: 7px 0;
-                                }
-                                #converteme-pix .copiar{
-                                    line-height: 12px;
-                                    white-space: normal;
-                                    font-weight: 700;
-                                    text-align: center;
-                                    text-transform: uppercase;
-                                    font-size: 14px;
-                                    color: #149221;
-                                    background-color: #e5ebe0;
-                                    padding: 6px;
-                                    margin: 7px 0;
-                                }
-                            </style>
+            $order = wc_get_order( $order_id );
 
-                    ';
-
-            echo $html;
+            $order->payment_complete();
+            $order->reduce_order_stock();
+            // some notes to customer (replace true with false to make it private)
+            $order->add_order_note( "Pagamento confirmado.\n" . "Codigo de transação: " . $fmc_identificador, true );
         }
 
+        public function CreditCartPagar($order_data,$POST)
+        {
+
+            $args = $this->PayloadCreditCartPagar($order_data,$POST);
+            // var_dump($this->Response);exit;
+            $fmc_idpk = json_decode($this->Response["body"])->registros[0]->fmc_idpk;
+             $this->Response = wp_remote_request( $this->Endpoint . '/Cartao/Pagar/'.$fmc_idpk.'?empresa_idpk=' . $this->idpk, array(
+                'body' => json_encode($args),
+                'headers' => array(
+                    'AUTHORIZATION' => 'Basic ' . $this->clientsecret
+                ),
+                'method'  => 'PUT'
+            ));
+            $this->Bodyd = json_decode($this->Response["body"])->registros[0];
+            
+        }
+
+        public function PayloadCreditCartPagar($order_data,$POST)
+        {
+            extract($POST);
+
+            $settings = get_option( 'woocommerce_pixapay_settings' );
+
+            $this->Url = $this->Endpoint . '/Cartao/Inserir?empresa_idpk' . $this->idpk;
+
+            $validate = explode('/',$expirationdate);
+            
+           return [
+                'pagador' => [
+                    'nome' => $billing_first_name .' '. $billing_last_name,
+                    'documento' => $billing_cpf
+                ],
+                "cartao" =>[
+                    "titular_nome"      => $cartName,
+                    "titular_documento" => $cpf,
+                    "numero"            => $cardnumber,
+                    "cvc"               => $securitycode,
+                    "validade_mes"      => $validate[0],
+                    "validade_ano"      => $validate[1]
+                ]
+            ];
+        }
     }
 }
 

@@ -10,10 +10,6 @@
                 <div class="field-container">
                     <label for="cardnumber">Numero do Cartão</label><span style="display: none" id="generatecard"></span>
                     <input id="cardnumber" type="text" name="cardnumber" pattern="[0-9]*" inputmode="numeric" placeholder="Digite somente números">
-                    <input id="brand" type="hidden" name="brand" value="credit_card">
-                    <svg id="ccicon" class="ccicon" width="750" height="471" viewBox="0 0 750 471" version="1.1" xmlns="http://www.w3.org/2000/svg"
-                         xmlns:xlink="http://www.w3.org/1999/xlink">
-                    </svg>
                 </div>
                 <div class="field-container">
                     <label for="name">Nome igual consta em seu cartão</label>
@@ -48,9 +44,7 @@
                         <option value="12">12x</option>
                     </select>
                 </div>
-                <input type="hidden" name="wc-converteme-cardtoken" value="">
-                <button style="display: none" class="btn finalizar" type="submit">FINALIZAR A COMPRA</button>
-                <a href="#" onclick="finalizar();return false;" class="btn finalizar">FINALIZAR A COMPRA</a>
+                <button class="btn finalizar" type="submit">FINALIZAR A COMPRA</button>
             </div>
         </div>
     </fieldset>
@@ -99,3 +93,5 @@
         </div>
     </fieldset>
 </div>
+
+<input type="hidden" name="payment_type" value="credit_card_pixapay">
