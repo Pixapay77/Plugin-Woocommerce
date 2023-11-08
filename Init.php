@@ -646,6 +646,8 @@ function Pixapay_init()
                 "fmb_juros_mensal"                  => $settings['boletojuros'],
                 "fmb_multa"                         => $settings['boletomulta'],
                 "fmb_idpk"                          => (string) $order["id"],
+                "fmp_webhook"       =>  $this->webhook_url . '/wc-api/webhook_pagamento',
+
             ];
 
         }
@@ -665,7 +667,9 @@ function Pixapay_init()
                 "fmc_cliente_documento"=> $billing_cpf,        
                 "fmc_qtde_parcelas"=> $installments,
                 "fmc_valor"=> (double) $order['total'],
-                "fmc_data_expiracao"=> $expiracao
+                "fmc_data_expiracao"=> $expiracao,
+                "fmp_webhook"       =>  $this->webhook_url . '/wc-api/webhook_pagamento'
+
            ];
         }
 
