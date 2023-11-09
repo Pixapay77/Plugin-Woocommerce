@@ -46,6 +46,7 @@ function Pixapay_init()
             add_action( 'woocommerce_before_thankyou', array($this,'dados_pagamento'));
             add_action( 'woocommerce_admin_order_data_after_billing_address', array($this,'order_cpf_backend'));
             add_action( 'woocommerce_api_webhook_pagamento', array( $this, 'webhook' ) );
+            add_action('wp_head',array($this,'custonButton'));
         }
 
         public function init_form_fields()
@@ -88,6 +89,20 @@ function Pixapay_init()
                     ),
                     'default'     => 'boleto',
                     'description' => 'Selecione os metodos desejado.',
+                ),
+
+                'colorButton' => array(
+                    'title'       => 'Botão finalizar',
+                    'type'        => 'color',
+                    'default'     => '#fed700',
+                    'description' => 'Selecione a cor de sua preferecia.',
+                ),
+
+                'colorButtonfont' => array(
+                    'title'       => 'Botão finalizar fonte',
+                    'type'        => 'color',
+                    'default'     => '#000000',
+                    'description' => 'Selecione a cor de sua preferecia.',
                 ),
 
                 'section_credit_card' => array(
@@ -881,6 +896,33 @@ function Pixapay_init()
                     "validade_ano"      => $validate[1]
                 ]
             ];
+        }
+
+        public function custonButton()
+        {
+            $settings = get_option( 'woocommerce_pixapay_settings' );
+
+            echo "
+            
+                <style>
+                #woocommercerConverteme button.finalizar, #woocommercerConverteme a.finalizar {
+                    box-sizing: border-box;
+                    background: ".$settings['colorButton'].";
+                    border-radius: 4px;
+                    padding: 10px 30px;
+                    position: absolute;
+                    color: ".$settings['colorButtonfont'].";
+                    font-family: unset;
+                    font-style: unset;
+                    font-weight: unset;
+                    font-size: unset;
+                    width: 90%;
+                    bottom: -20px;
+                    left: 5%;
+                    right: 5%;
+                }
+                </style>
+            ";
         }
     }
 }
