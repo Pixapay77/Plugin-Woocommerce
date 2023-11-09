@@ -78,10 +78,23 @@ function Pixapay_init()
                     'default'     => 'Descricao do servico de pagamento.',
                 ),
 
+                'typepaymts' => array(
+                    'title'       => 'Modos dados',
+                    'type'        => 'multiselect',
+                    'options'     => array(
+                        'pix' => 'Pix',
+                        'boleto' => 'Boleto',
+                        'creditcart' => 'Cartão de Credito'
+                    ),
+                    'default'     => 'boleto',
+                    'description' => 'Selecione os metodos desejado.',
+                ),
+
                 'section_credit_card' => array(
                     'type' => 'title',
                     'title' => 'Configurações Cartão de Credito',
                 ),
+
                 'installments' => array(
                     'title'       => 'Quantidade de Parcelas',
                     'type'        => 'select',
@@ -109,6 +122,17 @@ function Pixapay_init()
                     'description' => 'Tempo de validade da Cobrança após ser criado! Tempo deve ser informado  minutos.',
                     'default'     => 0,
                     'desc_tip'    => true,
+                ),
+
+                'credcartantecipacao' => array(
+                    'title'       => 'Antecipação',
+                    'type'        => 'select',
+                    'options'     => array(
+                        'sim' => 'Sim',
+                        'nao' => 'Não',
+                    ),
+                    'default'     => 'nao',
+                    'description' => 'Caso queira antipar todas as cobranças dcartão dcredito',
                 ),
 
                 'section_apix' => array(
@@ -668,7 +692,8 @@ function Pixapay_init()
                 "fmc_qtde_parcelas"=> $installments,
                 "fmc_valor"=> (double) $order['total'],
                 "fmc_data_expiracao"=> $expiracao,
-                "fmp_webhook"       =>  $this->webhook_url . '/wc-api/webhook_pagamento'
+                "fmp_webhook"       =>  $this->webhook_url . '/wc-api/webhook_pagamento',
+                "fmc_antecipar"     => $settings['credcartantecipacao'] == 'sim' ? 'S' : ''
 
            ];
         }
@@ -735,39 +760,50 @@ function Pixapay_init()
         {
             global $wpdb;
 
+            ///  priso dinir a logica do starus do retorno
+
             $fmc_identificador = $data->pix["fmp_idpk"];
-            $sql = "SELECT post_id FROM {$wpdb->postmeta} where meta_key = '_pixapay_pedido_referencia' AND meta_value = '{$fmc_identificador}'";
+            $fmp_status = $data->pix["fmp_status"];
 
-            $result = $wpdb->get_results($sql);
+            if($fmp_status == 'Liquidado'){
+                $sql = "SELECT post_id FROM {$wpdb->postmeta} where meta_key = '_pixapay_pedido_referencia' AND meta_value = '{$fmc_identificador}'";
 
-            $order_id = $result[0]->post_id;
-
-            $order = wc_get_order( $order_id );
-
-            $order->payment_complete();
-            $order->reduce_order_stock();
-            // some notes to customer (replace true with false to make it private)
-            $order->add_order_note( "Pagamento confirmado por Pixapay.\n Código #" . $fmc_identificador , true );
+                $result = $wpdb->get_results($sql);
+    
+                $order_id = $result[0]->post_id;
+    
+                $order = wc_get_order( $order_id );
+    
+                $order->payment_complete();
+                $order->reduce_order_stock();
+                // some notes to customer (replace true with false to make it private)
+                $order->add_order_note( "Pagamento confirmado por Pixapay.\n Código #" . $fmc_identificador , true );
+            }
         }
 
         public function LiquidacaoBoleto($data)
         {
             global $wpdb;
 
+            ///  priso dinir a logica do starus do retorno
 
             $fmc_identificador = $data->pix["boleto"]["fmb_idpk"];
-            $sql = "SELECT post_id FROM {$wpdb->postmeta} where meta_key = '_pixapay_pedido_referencia' AND meta_value = '{$fmc_identificador}'";
+            $fmb_status = $data->pix["boleto"]["fmb_status"];
+            if($fmb_status == 'Liquidado'){
+                $sql = "SELECT post_id FROM {$wpdb->postmeta} where meta_key = '_pixapay_pedido_referencia' AND meta_value = '{$fmc_identificador}'";
 
-            $result = $wpdb->get_results($sql);
-
-            $order_id = $result[0]->post_id;
-
-            $order = wc_get_order( $order_id );
-
-            $order->payment_complete();
-            $order->reduce_order_stock();
-            // some notes to customer (replace true with false to make it private)
-            $order->add_order_note( "Pagamento confirmado por Pixapay.\n Código #" . $fmc_identificador , true );
+                $result = $wpdb->get_results($sql);
+    
+                $order_id = $result[0]->post_id;
+    
+                $order = wc_get_order( $order_id );
+    
+                $order->payment_complete();
+                $order->reduce_order_stock();
+                // some notes to customer (replace true with false to make it private)
+                $order->add_order_note( "Pagamento confirmado por Pixapay.\n Código #" . $fmc_identificador , true );
+    
+            }
         }
 
 
@@ -775,24 +811,29 @@ function Pixapay_init()
         {
             global $wpdb;
 
+                        ///  priso dinir a logica do starus do retorno
+
             $fmc_identificador = $data->cartao["fmc_idpk"];
-            $sql = "SELECT post_id FROM {$wpdb->postmeta} where meta_key = '_pixapay_pedido_referencia' AND meta_value = '{$fmc_identificador}'";
+            $fmc_status = $data->cartao["fmc_status"];
 
-            $result = $wpdb->get_results($sql);
+            if($fmc_status == 'Confirmado'){
+                $sql = "SELECT post_id FROM {$wpdb->postmeta} where meta_key = '_pixapay_pedido_referencia' AND meta_value = '{$fmc_identificador}'";
 
-            if(count($result) > 0){
-                $order_id = $result[0]->post_id;
+                $result = $wpdb->get_results($sql);
 
-                $order = wc_get_order( $order_id );
-    
-                $order->payment_complete();
-                $order->reduce_order_stock();
-                // some notes to customer (replace true with false to make it private)
-                $order->add_order_note( "Pagamento confirmado por Pixapay.\n Código #" . $fmc_identificador, true );
-            }else{
-                $order->add_order_note( "erro " . print_r($result), true );
+                if(count($result) > 0){
+                    $order_id = $result[0]->post_id;
+
+                    $order = wc_get_order( $order_id );
+        
+                    $order->payment_complete();
+                    $order->reduce_order_stock();
+                    // some notes to customer (replace true with false to make it private)
+                    $order->add_order_note( "Pagamento confirmado por Pixapay.\n Código #" . $fmc_identificador, true );
+                }else{
+                    $order->add_order_note( "erro " . print_r($result), true );
+                }
             }
-
         }
 
 

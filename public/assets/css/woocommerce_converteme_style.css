@@ -79,11 +79,11 @@
 }
 
 #woocommercerConverteme .field-container label{
-    display: block;
-    font-family: 'Inter';
+    /* display: block; */
+    /* font-family: 'Inter';
     font-style: normal;
     font-weight: 500;
-    font-size: 12px;
+    font-size: 12px; */
     line-height: 15px;
     color: #000000;
 }
@@ -636,3 +636,8 @@
     left: 43px;
 }
 
+.center-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
