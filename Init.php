@@ -11,6 +11,7 @@ function Pixapay_init()
         protected $Response;
         public $Body;
         public $Bodyd;
+        public $Webhook;
 
         public function __construct()
         {
@@ -20,6 +21,7 @@ function Pixapay_init()
             $this->method_title = 'Pixapay Gateway';
             $this->method_description = 'Permite integrar transaçõe da Pixapay com compras woocommerce.'; // will be displayed on the options page
 
+            $this->Webhook  = get_option('home');
             // gateways can support subscriptions, refunds, saved payment methods,
             // but in this tutorial we begin with simple payments
             $this->supports = array(
@@ -37,8 +39,7 @@ function Pixapay_init()
             $this->testmode = 'yes' === $this->get_option( 'testmode' );
             $this->idpk     = $this->testmode ? $this->get_option( 'test_client_id' ) : $this->get_option( 'client_id' );
             $this->clientsecret = $this->testmode ? $this->get_option( 'test_client_secret' ) : $this->get_option( 'client_secret' );
-            $this->Endpoint = $this->testmode ? 'https://sandbox.tecno.mobi/api/v1' : 'https://sandbox.tecno.mobi/api/v1';
-            $this->webhook_url =  $this->testmode ? 'https://6607-2001-1284-f50f-caf9-e199-56a0-336c-2204.ngrok-free.app' : get_option('home');
+            $this->Endpoint = $this->testmode ? 'https://sandbox.tecno.mobi/api/v1' : 'https://api.tecno.mobi/api/v1';
 
             // This action hook saves the settings
             add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
@@ -76,7 +77,7 @@ function Pixapay_init()
                     'title'       => 'Descrição',
                     'type'        => 'textarea',
                     'description' => 'Descricao do servico de pagamento.',
-                    'default'     => 'Descricao do servico de pagamento.',
+                    'default'     => 'PIXAPAY TECNOLOGIA DE PAGAMENTOS',
                 ),
 
                 'typepaymts' => array(
@@ -217,6 +218,10 @@ function Pixapay_init()
                     'default'     => 0,
                     'desc_tip'    => true,
                 ),
+                'section_webhook' => array(
+                    'type' => 'title',
+                    'title' => "Webhook : " . $this->Webhook . '/wc-api/webhook_pagamento/',
+                ),
 
 
                 'section_auth' => array(
@@ -255,6 +260,9 @@ function Pixapay_init()
         public function payment_fields()
         {
 
+            $settings = get_option( 'woocommerce_pixapay_settings' );
+
+
             // ok, let's display some description before the payment form
             if ( $this->description ) {
                 // you can instructions for test mode, I mean test card numbers etc.
@@ -272,8 +280,122 @@ function Pixapay_init()
             // Add this action hook if you want your custom payment gateway to support it
             do_action( 'woocommerce_credit_card_form_start', $this->id );
 
-            // I recommend to use inique IDs, because other gateways could already use #ccNo, #expdate, #cvc
-            include_once plugin_dir_path(__FILE__) . 'public/template/methods.html';
+            $Pix = '
+                    <fieldset class="pix">
+                    <p data-type="pix"  onclick="open_pix(this)"><span>PIX</span></p>
+                    <div class="content pix" style="width: 100%; margin: 0px auto;padding: 0px 0;">
+                        <ul>
+                            <li class="load">
+                                <div>
+                                    Abra o aplicativo do seu banco de preferência
+                                </div>
+                            </li>
+                            <li class="qrcode">
+                                <div>
+                                    Selecione a opção pagar com Pix
+                                </div>
+                            </li>
+                            <li class="seguranca">
+                                <div>
+                                    Leia o QR code ou copie o código e cole no campo de pagamento
+                                </div>
+                            </li>
+                        </ul>
+                        <button class="btn finalizar" type="submit">FINALIZAR A COMPRA</button>
+                    </div>
+                </fieldset>
+            ';
+
+            $boleto = '
+                <fieldset class="boleto">
+                    <p data-type="boleto"  onclick="open_boleto(this)"><span>BOLETO BANCÁRIO</span></p>
+                    <div class="content boleto" style="width: 100%;margin: 0 auto;">
+                        <ul>
+                            <li class="codebar">
+                            <div> Você pode pagar o boleto pelo código de barras ou</div>
+                            </li>
+                            <li class="print">
+                                <div>Pode Imprimir e pagar o boleto</div>
+                            </li>
+                            <li class="calendar">
+                                <div>Prazo para o boleto confirmar o pagamento é 3 dias úteis</div>
+                            </li>
+                        </ul>
+                        <button class="btn finalizar" type="submit">FINALIZAR A COMPRA</button>
+
+                    </div>
+                </fieldset>
+            ';
+
+            $credit_card = '
+                    <fieldset class="cred_card">
+                    <p class="title" data-type="cred_card" onclick="open_cred_card(this)">
+                        <span>CARTÃO DE CRÉDITO</span>
+                    </p>
+                        <span class="brands"></span>
+                        <div class="center-container">
+                            <div class="content cred_card" style="max-width: 382px;margin-bottom: 50px;">
+                                <div class="form-container">
+                                    <div class="field-container">
+                                        <label for="cardnumber">Numero do Cartão</label><span style="display: none" id="generatecard"></span>
+                                        <input id="cardnumber" type="text" name="cardnumber" pattern="[0-9]*" inputmode="numeric" placeholder="Digite somente números">
+                                    </div>
+                                    <div class="field-container">
+                                        <label for="name">Nome igual consta em seu cartão</label>
+                                        <input id="name" name="cartName" maxlength="20" type="text" placeholder="Ex. Maria José Castro">
+                                    </div>
+                                    <div class="field-container">
+                                        <label for="expirationdate">Validade (Mês/Ano)</label>
+                                        <input id="expirationdate" name="expirationdate" type="text" pattern="[0-9]*" inputmode="numeric" placeholder="MM/AA">
+                                    </div>
+                                    <div class="field-container">
+                                        <label for="securitycode">Código de segurança</label>
+                                        <input id="securitycode" name="securitycode" type="text" pattern="[0-9]*" inputmode="numeric" placeholder="CVC">
+                                    </div>
+                                    <div class="field-container">
+                                        <label for="cpf">CPF do títular</label>
+                                        <input id="cpf" name="cpf" type="text" pattern="[0-9]*" inputmode="numeric" placeholder="000.000.000-00">
+                                    </div>
+                                    <div class="field-container">
+                                        <label for="securitycode">Número de Parcelas</label>
+                                        <select name="installments"  style="width: 100%;" onclick="get_installments(this);">
+                                            <option selected value="1">1x</option>
+                                        </select>
+                                    </div>
+                                    <button class="btn finalizar" type="submit">FINALIZAR A COMPRA</button>
+                                </div>
+                            </div>
+                        </div>
+                
+                </fieldset>
+            ';
+
+            $html = '';
+            foreach ($settings['typepaymts'] as $key => $typepaymts) {
+               switch ($typepaymts) {
+                case 'pix':
+                    $html .= $Pix;
+                break;
+                case 'boleto':
+                    $html .= $boleto;
+                break;
+                case 'creditcart':
+                    $html .= $credit_card;
+                break;
+                                       
+                }
+            }
+
+
+            $box = '
+                <img src="https://14-imagem-777.s3.sa-east-1.amazonaws.com/PixapayLOGO60x60.png" alt="">
+                <div id="woocommercerConverteme">'.$html.'</div>
+                <input type="hidden" name="payment_type" value="credit_card_pixapay">
+            ';
+
+            echo $box;
+
+            $html = '';
 
             do_action( 'woocommerce_credit_card_form_end', $this->id );
 
@@ -337,14 +459,13 @@ function Pixapay_init()
             $order_data = $order->get_data(); // The Order data
             $user_id = $order_data['customer_id'];
 
-
             update_user_meta( $user_id, 'billing_cpf', $_POST['billing_cpf'] );
 
             /*
               * Array with parameters for API interaction
              */
 
-            $args = $this->Payload($order_data,$_POST);
+             $args = $this->Payload($order_data,$_POST);
 
             /*
              * Your API interaction could be built with wp_remote_post()
@@ -385,8 +506,6 @@ function Pixapay_init()
 
                 $this->TypePayment = $payment_type;
 
-                $this->OrderCreate($order,$order_id);
-
                 update_post_meta($order_id,'_pixapay_payment_type',$this->TypePayment);
 
                 if($this->TypePayment == 'boleto_pixapay'){
@@ -407,7 +526,9 @@ function Pixapay_init()
                     $this->CreditCartPagar($order_data,$_POST);
                     update_post_meta($order_id,'_pixapay_cartao_token',$this->Bodyd->cartao_token);
                  }
-    
+
+                 $this->OrderCreate($order,$order_id);
+
 
                  return array(
                     'result' => 'success',
@@ -495,16 +616,17 @@ function Pixapay_init()
             $this->OrderReturn((object) $data);
             exit();
         }
-        public function OrderCreate($order)
+        public function OrderCreate($order,$order_id)
         {
+            $ref = get_post_meta($order_id,'_pixapay_pedido_referencia',true);
+
 
             if($this->TypePayment == "boleto_pixapay"){
-                $description =  "Aguardando pagamento por Pixapay - boleto. \n";
+                $description =  "Aguardando pagamento por Pixapay - boleto Código: #{$ref}. \n";
             }elseif($this->TypePayment== "credit_card_pixapay"){
-                $ref = get_post_meta($order_id,'_pixapay_pedido_referencia',true);
-                $description = "Aguardando pagamento por Pixapay - Cartão de credito.";
+                $description = "Aguardando pagamento por Pixapay - Cartão de credito Código: #{$ref}.";
             }elseif($this->TypePayment == "pix_pixapay"){
-                $description = "Aguardando pagamento por Pixapay -  PIX.";
+                $description = "Aguardando pagamento por Pixapay -  PIX Código: #{$ref}.";
             }
 
             // some notes to customer (replace true with false to make it private)
@@ -594,8 +716,8 @@ function Pixapay_init()
                     <div id="myModal" class="modal">
                         <div class="modal-content">
                             <span class="close" id="closeModal">&times;</span>
-                            <h2>Pague com QRCODE</h2>
-                            <img src="'.$_pixapay_fmp_link_qrcode.'" style="width: 252px;">
+                            <h2 style="font-size: 30px;">Pague com QRCODE</h2>
+                            <center><img src="'.$_pixapay_fmp_link_qrcode.'" style="width: 252px;"></center>
                         </div>
                     </div>
                     <h3 class="woocommerce-order-details__title">Detalhes de pagamento</h3>
@@ -609,13 +731,13 @@ function Pixapay_init()
                     <br>
                 ';
             }elseif ($payment_method == 'BOLETO') {
-                $_pixapay_fmb_link_compartilhamento = get_post_meta($order_id,'_pixapay_fmb_link_compartilhamento',true);
+                $_pixapay_fmb_link_url = get_post_meta($order_id,'_pixapay_fmb_link_url',true);
 
                echo '
                     <h3 class="woocommerce-order-details__title">Detalhes de pagamento</h3>
                     <ul>
                         <li><strong>Metódo de pagamento:</strong>  '.$payment_method.'</li>
-                        <li><strong>Ver Boleto:</strong>  <a target="_blanck" href="'.$_pixapay_fmb_link_compartilhamento.'" >Clique aqui!</a></li>
+                        <li><strong>Ver Boleto:</strong>  <a target="_blanck" href="'.$_pixapay_fmb_link_url.'" >Clique aqui!</a></li>
                     </ul>
                     <br>
                     <hr>
@@ -642,15 +764,14 @@ function Pixapay_init()
 
             $settings = get_option( 'woocommerce_pixapay_settings' );
             $this->Url = $this->Endpoint . '/Pix/Instantaneo?empresa_idpk=' . $this->idpk;
-            
-            $expirepix = $this->expirepix();
 
+            $expirepix = $this->expirepix();
 
             return [
                 "fmp_descricao"     => 'WC Pedido - ' . $billing_first_name .' '. $billing_last_name,        
                 "fmp_valor"         => $order['total'],
                 "fmp_data_expicarao"=> $expirepix,
-                "fmp_webhook"       =>  $this->webhook_url . '/wc-api/webhook_pagamento',
+                "fmp_webhook"       =>  $this->Webhook . '/wc-api/webhook_pagamento/',
                 "fmp_idpk"          => (string) $order["id"]
             ];
 
@@ -685,7 +806,7 @@ function Pixapay_init()
                 "fmb_juros_mensal"                  => $settings['boletojuros'],
                 "fmb_multa"                         => $settings['boletomulta'],
                 "fmb_idpk"                          => (string) $order["id"],
-                "fmp_webhook"       =>  $this->webhook_url . '/wc-api/webhook_pagamento',
+                "fmb_webhook"       =>  $this->Webhook . '/wc-api/webhook_pagamento/',
 
             ];
 
@@ -707,7 +828,7 @@ function Pixapay_init()
                 "fmc_qtde_parcelas"=> $installments,
                 "fmc_valor"=> (double) $order['total'],
                 "fmc_data_expiracao"=> $expiracao,
-                "fmp_webhook"       =>  $this->webhook_url . '/wc-api/webhook_pagamento',
+                "fmc_webhook"       =>  $this->Webhook . '/wc-api/webhook_pagamento/',
                 "fmc_antecipar"     => $settings['credcartantecipacao'] == 'sim' ? 'S' : ''
 
            ];
@@ -718,7 +839,7 @@ function Pixapay_init()
         {
             $settings = get_option( 'woocommerce_pixapay_settings' );
             // Data no formato "Y-m-d H:i:s"
-            $data = date('Y-m-d H:i:s');
+            $data = date('Y/m/d');
 
             // Crie um objeto DateTime a partir da string da data
             $dataHora = new DateTime($data);
@@ -737,7 +858,7 @@ function Pixapay_init()
         {
             $settings = get_option( 'woocommerce_pixapay_settings' );
             // Data no formato "Y-m-d H:i:s"
-            $data = date('Y-m-d H:i:s');
+            $data = date('Y/m/d');
 
             // Crie um objeto DateTime a partir da string da data
             $dataHora = new DateTime($data);
@@ -756,7 +877,7 @@ function Pixapay_init()
         {
             $settings = get_option( 'woocommerce_pixapay_settings' );
             // Data no formato "Y-m-d H:i:s"
-            $data = date('Y-m-d H:i:s');
+            $data = date('Y/m/d');
 
             // Crie um objeto DateTime a partir da string da data
             $dataHora = new DateTime($data);
@@ -766,9 +887,7 @@ function Pixapay_init()
 
             // Obtenha a nova data no mesmo formato
             $novaData = $dataHora->format('d/m/Y');
-
             return $novaData;
-
         }
 
         public function LiquidacaoPix($data)
@@ -927,36 +1046,3 @@ function Pixapay_init()
     }
 }
 
-add_filter( 'woocommerce_payment_gateways', 'WC_Pixapay_add_gateway_class' );
-function WC_Pixapay_add_gateway_class( $gateways ) {
-    $gateways[] = 'WC_Pixapay_Gateway'; // your class name is here
-    return $gateways;
-}
-
-
-
-add_action('wp_enqueue_scripts', 'woocommerce_pixapay_style');
-function woocommerce_pixapay_style()
-{
-    wp_enqueue_style('woocommerce_converteme_style',plugin_dir_url(__FILE__) . 'public/assets/css/woocommerce_converteme_style.css',[],false,false);
-    wp_enqueue_script('woocommerce_converteme_script_imask','https://cdnjs.cloudflare.com/ajax/libs/imask/3.4.0/imask.min.js',['jquery'],false,false);
-    wp_enqueue_script('woocommerce_converteme_script_mercadopago','https://sdk.mercadopago.com/js/v2',['jquery'],false,false);
-    wp_enqueue_script('woocommerce_converteme_script',plugin_dir_url(__FILE__) . 'public/assets/js/woocommerce_converteme_script.js',['jquery'],false,false);
-}
-
-if ( ! function_exists( 'woocommerce_order_review' ) ) {
-
-    /**
-     * Output the Order review table for the checkout.
-     *
-     * @param bool $deprecated Deprecated param.
-     */
-    function woocommerce_order_review( $deprecated = false ) {
-        wc_get_template(
-            'checkout/review-order.php',
-            array(
-                'checkout' => WC()->checkout(),
-            )
-        );
-    }
-}

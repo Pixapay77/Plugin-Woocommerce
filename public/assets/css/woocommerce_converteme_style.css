@@ -446,9 +446,9 @@
 }
 
 #woocommercerConverteme fieldset.cred_card p{
-    padding: 0px 5px 0px !important;
+    padding: 8px 8px 8px !important;
     position: relative;
-    margin: 4px;
+    margin: 0;
 }
 #woocommercerConverteme fieldset.cred_card .title span{
     font-family: 'Inter';
@@ -501,7 +501,7 @@
     font-family: 'Inter';
     font-style: normal;
     font-weight: 600;
-    font-size: .7em;
+    font-size: .8em!important;
     line-height: 17px;
     color: #C8C6C6;
     margin: 0px;
@@ -510,7 +510,7 @@
     font-family: 'Inter';
     font-style: normal;
     font-weight: 600;
-    /*font-size: .8em;*/
+    font-size: 1em!important;
     line-height: 15px;
     color: #C8C6C6;
     position: absolute;
@@ -561,6 +561,7 @@
     color: #7E7E7E;
     margin:17px 0!important;
     border-bottom: 0px!important;
+    list-style: none;
 }
 
 #woocommercerConverteme fieldset.pix .content ul li.load::before{
@@ -604,6 +605,7 @@
     line-height: 15px;
     color: #7E7E7E;
     margin: 17px auto;
+    list-style: none;
 }
 
 
@@ -640,4 +642,17 @@
     display: flex;
     justify-content: center;
     align-items: center;
+}
+
+#add_payment_method #payment div.payment_box, .woocommerce-cart #payment div.payment_box, .woocommerce-checkout #payment div.payment_box {
+    position: relative!important;
+    box-sizing: border-box!important;
+    width: 100%!important;
+    padding: 1em!important;
+    margin: 1em 0!important;
+    font-size: .92em!important;
+    border-radius: 2px!important;
+    line-height: 1.5!important;
+    background-color: #dfdcde!important;
+    color: #515151!important;
 }
