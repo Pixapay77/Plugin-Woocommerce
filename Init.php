@@ -454,11 +454,12 @@ function Pixapay_init()
 
             extract($_POST);
 
+
             // we need it to get any order detailes
             $order = wc_get_order( $order_id );
             $order_data = $order->get_data(); // The Order data
             $user_id = $order_data['customer_id'];
-
+            
             update_user_meta( $user_id, 'billing_cpf', $_POST['billing_cpf'] );
 
             /*
@@ -550,6 +551,8 @@ function Pixapay_init()
         public function Payload($order,$dados)
         {
             extract($dados);
+
+            
 
             switch ($payment_type) {
                 case 'credit_card_pixapay':
@@ -838,14 +841,17 @@ function Pixapay_init()
         public function expirepix()
         {
             $settings = get_option( 'woocommerce_pixapay_settings' );
+
             // Data no formato "Y-m-d H:i:s"
             $data = date('Y/m/d');
 
             // Crie um objeto DateTime a partir da string da data
             $dataHora = new DateTime($data);
 
+            $expirepix = $settings['pixexpire'] == '' ? 60 : $settings['pixexpire'];
+
             // Adicione 5 minutos
-            $dataHora->add(new DateInterval('PT'.$settings['pixexpire'].'M'));
+            $dataHora->add(new DateInterval('PT'.$expirepix.'M'));
 
             // Obtenha a nova data no mesmo formato
             $novaData = $dataHora->format('d/m/Y H:i:s');

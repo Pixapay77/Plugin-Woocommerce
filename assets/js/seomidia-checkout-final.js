@@ -2,6 +2,30 @@
 window.onload = function() {
     get_methodsSelected();
   };
+
+  (function(){
+    setTimeout(() => {
+        jQuery('li.wc_payment_method input[type=radio]').change(function(){
+            if(this.checked){
+              var id = jQuery(this).attr('id');
+              
+              if(id == 'payment_method_pixapay'){
+                jQuery('#place_order').hide();
+              }else{
+                jQuery('#place_order').show();
+              }
+            }
+          })
+
+          var pixapay = jQuery('li.wc_payment_method input[type=radio]:checked');
+          if(pixapay.length >= 1){
+             var payment_box = jQuery(pixapay).val();
+             if(payment_box == 'pixapay'){
+                jQuery('#place_order').hide();
+             }
+          }
+    }, 2000);
+  })(jQuery)
   
 
 function get_installments(param)
