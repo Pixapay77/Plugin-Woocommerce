@@ -427,7 +427,7 @@ function Pixapay_init()
         }
         public function validate_fields()
         {
-            if( empty( $_POST[ 'billing_neighborhood' ]) ) {
+            if( empty( $_POST[ 'billing_neighborhood' ]) && $_POST[ 'payment_type' ] == 'boleto_pixapay') {
                 wc_add_notice(  'Bairro é obrigatório', 'error' );
                 return false;
             }
@@ -468,7 +468,7 @@ function Pixapay_init()
 
              $args = $this->Payload($order_data,$_POST);
 
-            /*
+             /*
              * Your API interaction could be built with wp_remote_post()
               */
 
