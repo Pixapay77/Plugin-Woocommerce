@@ -428,7 +428,7 @@ function Pixapay_init()
         public function validate_fields()
         {
             if( empty( $_POST[ 'billing_neighborhood' ]) && $_POST[ 'payment_type' ] == 'boleto_pixapay') {
-                wc_add_notice(  'Bairro é obrigatório', 'error' );
+                wc_add_notice(  'Bairro é obrigatório!', 'error' );
                 return false;
             }
             if( empty( $_POST[ 'billing_number' ]) ) {
@@ -454,6 +454,10 @@ function Pixapay_init()
 
             extract($_POST);
 
+            //  salvar dados do checkout nos logs
+            $this->Create_log('Dados checkout => ' . json_encode($_POST));
+
+            update_post_meta($order_id,'_pixapay_data_chechout', json_encode($_POST));
 
             // we need it to get any order detailes
             $order = wc_get_order( $order_id );
@@ -472,6 +476,10 @@ function Pixapay_init()
              * Your API interaction could be built with wp_remote_post()
               */
 
+              $this->Create_log('Request Pixapay => Endpoind ['.$this->Url.'] Payload ['.json_encode($args).']');
+              update_post_meta($order_id,'_pixapay_chechout_endpoint', $this->Url);
+              update_post_meta($order_id,'_pixapay_chechout_endpoint_request', json_encode($args));
+
               $this->Response = wp_remote_post( $this->Url, array(
                 'body' => json_encode($args),
                 'headers' => array(
@@ -487,12 +495,15 @@ function Pixapay_init()
                 $this->Body = json_decode($this->Response["body"])->registros[0];
                 if(is_null($this->Body)){
                     $this->Body =  json_decode($this->Response["body"]);
+                    $this->Create_log('Response Pixapay => Endpoind ['.$this->Url.'] Payload ['.$this->Response["body"].']');
+                    update_post_meta($order_id,'_pixapay_chechout_endpoint_response', json_encode($args));      
                 }
 
             } catch (\Throwable $th) {
                 var_dump($this->Response);exit();
                 $msg = $th->getMessage();
                 wc_add_notice(   $msg , 'error' );
+                $this->Create_log('Response Pixapay ERRO => Endpoind ['.$this->Url.'] msg ['.$msg .']');
                 wp_die();
             }
 
@@ -616,6 +627,7 @@ function Pixapay_init()
         public function webhook()
         {
             $data = json_decode(file_get_contents('php://input'), true);
+            $this->Create_log('Response Pixapay Webhook =>  ['.json_encode($data) .']');
             $this->OrderReturn((object) $data);
             exit();
         }
@@ -637,11 +649,14 @@ function Pixapay_init()
         }
         public function OrderReturn($data)
         {
+            $typePayment = $this->get_PaymentMethodOrder($data);
+
+            
             switch ($data->tipo_cobranca) {
                 case 'pix':
                     $this->LiquidacaoPix($data);
                 break;
-                case 'bolepix':
+                case 'boleto':
                     $this->LiquidacaoBoleto($data);
                 break;
                 case 'cartao':
@@ -900,24 +915,27 @@ function Pixapay_init()
         {
             global $wpdb;
 
-            ///  priso dinir a logica do starus do retorno
 
+            ///  priso dinir a logica do starus do retorno
             $fmc_identificador = $data->pix["fmp_idpk"];
             $fmp_status = $data->pix["fmp_status"];
+
 
             if($fmp_status == 'Liquidado'){
                 $sql = "SELECT post_id FROM {$wpdb->postmeta} where meta_key = '_pixapay_pedido_referencia' AND meta_value = '{$fmc_identificador}'";
 
-                $result = $wpdb->get_results($sql);
-    
-                $order_id = $result[0]->post_id;
-    
-                $order = wc_get_order( $order_id );
-    
-                $order->payment_complete();
-                $order->reduce_order_stock();
-                // some notes to customer (replace true with false to make it private)
-                $order->add_order_note( "Pagamento confirmado por Pixapay.\n Código #" . $fmc_identificador , true );
+                    $result = $wpdb->get_results($sql);
+                    var_dump($result);exit();
+                    $order_id = $result[0]->post_id;
+                    update_post_meta($order_id,'_pixapay_pedido_retorno_webhook', json_encode($data));
+
+                    $order = wc_get_order( $order_id );
+        
+                    $order->payment_complete();
+                    $order->reduce_order_stock();
+                    // some notes to customer (replace true with false to make it private)
+                    $order->add_order_note( "Pagamento confirmado por Pixapay.\n Código #" . $fmc_identificador , true );
+
             }
         }
 
@@ -925,23 +943,23 @@ function Pixapay_init()
         {
             global $wpdb;
 
-            ///  priso dinir a logica do starus do retorno
+            $fmc_identificador = $data->pix["fmb_idpk"];
+            $fmb_status = $data->pix["fmb_status"];
 
-            $fmc_identificador = $data->pix["boleto"]["fmb_idpk"];
-            $fmb_status = $data->pix["boleto"]["fmb_status"];
-            if($fmb_status == 'Liquidado'){
-                $sql = "SELECT post_id FROM {$wpdb->postmeta} where meta_key = '_pixapay_pedido_referencia' AND meta_value = '{$fmc_identificador}'";
-
-                $result = $wpdb->get_results($sql);
-    
-                $order_id = $result[0]->post_id;
-    
-                $order = wc_get_order( $order_id );
-    
-                $order->payment_complete();
-                $order->reduce_order_stock();
-                // some notes to customer (replace true with false to make it private)
-                $order->add_order_note( "Pagamento confirmado por Pixapay.\n Código #" . $fmc_identificador , true );
+            if(in_Array($fmb_status,['Liquidado Pix','Liquidado'])){
+                try {
+                    $sql = "SELECT post_id FROM {$wpdb->postmeta} where meta_key = '_pixapay_pedido_referencia' AND meta_value = '{$fmc_identificador}'";
+                    $result = $wpdb->get_results($sql);
+                    $order_id = $result[0]->post_id;
+                    update_post_meta($order_id,'_pixapay_pedido_retorno_webhook', json_encode($data));
+                    $order = wc_get_order( $order_id );
+                    $order->payment_complete();
+                    $order->reduce_order_stock();
+                    $order->add_order_note( "Pagamento confirmado por Pixapay.\n Código #" . $fmc_identificador , true );
+                } catch (\Throwable $th) {
+                    //throw $th;
+                    $this->Create_log('Ocorreu um erro: ' . $th->getMessage() . ' no arquivo ' . $th->getFile() . ' na linha ' . $th->getLine());
+                }
     
             }
         }
@@ -963,6 +981,7 @@ function Pixapay_init()
 
                 if(count($result) > 0){
                     $order_id = $result[0]->post_id;
+                    update_post_meta($order_id,'_pixapay_pedido_retorno_webhook', json_encode($data));
 
                     $order = wc_get_order( $order_id );
         
@@ -976,7 +995,18 @@ function Pixapay_init()
             }
         }
 
-
+        public function get_PaymentMethodOrder($data)
+        {
+            if(isset($data->pix)){
+                return 'pix';
+            }elseif(isset($data->boletopix)){
+                return 'boleto';
+            }elseif(isset($data->boleto)){
+                return 'boleto';
+            }elseif(isset($data->cartao)){
+                return 'cartao';
+            }
+        }
 
         public function CreditCartPagar($order_data,$POST)
         {
@@ -1048,6 +1078,17 @@ function Pixapay_init()
                 }
                 </style>
             ";
+        }
+
+        function Create_log( $message ) {
+            // Caminho para o arquivo de log dentro do diretório de logs do plugin
+            $log_file = plugin_dir_path( __FILE__ ) . 'logs/log.txt';
+        
+            // Formate a mensagem de log
+            $log_message = '[' . date( 'Y-m-d H:i:s' ) . '] ' . $message . "\n";
+        
+            // Escreva a mensagem de log no arquivo
+            error_log( $log_message, 3, $log_file );
         }
     }
 }
