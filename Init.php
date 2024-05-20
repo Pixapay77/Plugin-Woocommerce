@@ -500,7 +500,6 @@ function Pixapay_init()
                 }
 
             } catch (\Throwable $th) {
-                var_dump($this->Response);exit();
                 $msg = $th->getMessage();
                 wc_add_notice(   $msg , 'error' );
                 $this->Create_log('Response Pixapay ERRO => Endpoind ['.$this->Url.'] msg ['.$msg .']');
@@ -649,15 +648,15 @@ function Pixapay_init()
         }
         public function OrderReturn($data)
         {
-            $typePayment = $this->get_PaymentMethodOrder($data);
-
-            
-            switch ($data->tipo_cobranca) {
+            switch ($data->pagamento_efetuado_por) {
                 case 'pix':
                     $this->LiquidacaoPix($data);
                 break;
                 case 'boleto':
                     $this->LiquidacaoBoleto($data);
+                break;
+                case 'bolepix':
+                    $this->LiquidacaoPix($data);
                 break;
                 case 'cartao':
                     $this->LiquidacaoCreditCart($data);
@@ -914,18 +913,24 @@ function Pixapay_init()
         public function LiquidacaoPix($data)
         {
             global $wpdb;
-
-
             ///  priso dinir a logica do starus do retorno
-            $fmc_identificador = $data->pix["fmp_idpk"];
-            $fmp_status = $data->pix["fmp_status"];
 
+            if($data->pagamento_efetuado_por == 'pix'){
+                $fmp_identificador = $data->pix["fmp_idpk"];
+                $fmp_status = $data->pix["fmp_status"];
+            }else{
+                if(isset($data->item)){
+                    $fmp_identificador = $data->item['boleto']["fmb_idpk"];
+                    $fmp_status = $data->item['boleto']["fmb_status"];
+                }else{
+                    $fmp_identificador = $data->boleto["fmb_idpk"];
+                    $fmp_status = $data->boleto["fmb_status"];
+                }
+            }
 
-            if($fmp_status == 'Liquidado'){
-                $sql = "SELECT post_id FROM {$wpdb->postmeta} where meta_key = '_pixapay_pedido_referencia' AND meta_value = '{$fmc_identificador}'";
-
+            if(in_Array($fmp_status,['Liquidado Boleto','Liquidado'])){
+                $sql = "SELECT post_id FROM {$wpdb->postmeta} where meta_key = '_pixapay_pedido_referencia' AND meta_value = '{$fmp_identificador}'";
                     $result = $wpdb->get_results($sql);
-                    var_dump($result);exit();
                     $order_id = $result[0]->post_id;
                     update_post_meta($order_id,'_pixapay_pedido_retorno_webhook', json_encode($data));
 
@@ -934,28 +939,25 @@ function Pixapay_init()
                     $order->payment_complete();
                     $order->reduce_order_stock();
                     // some notes to customer (replace true with false to make it private)
-                    $order->add_order_note( "Pagamento confirmado por Pixapay.\n Código #" . $fmc_identificador , true );
-
+                    $order->add_order_note( "Pagamento confirmado por Pixapay.\n Código #" . $fmp_identificador , true );
             }
         }
 
         public function LiquidacaoBoleto($data)
         {
             global $wpdb;
-
-            $fmc_identificador = $data->pix["fmb_idpk"];
+            $fmb_identificador = $data->pix["fmb_idpk"];
             $fmb_status = $data->pix["fmb_status"];
-
-            if(in_Array($fmb_status,['Liquidado Pix','Liquidado'])){
+            if(in_Array($fmb_status,['Liquidado Boleto','Liquidado'])){
                 try {
-                    $sql = "SELECT post_id FROM {$wpdb->postmeta} where meta_key = '_pixapay_pedido_referencia' AND meta_value = '{$fmc_identificador}'";
+                    $sql = "SELECT post_id FROM {$wpdb->postmeta} where meta_key = '_pixapay_pedido_referencia' AND meta_value = '{$fmb_identificador}'";
                     $result = $wpdb->get_results($sql);
                     $order_id = $result[0]->post_id;
                     update_post_meta($order_id,'_pixapay_pedido_retorno_webhook', json_encode($data));
                     $order = wc_get_order( $order_id );
                     $order->payment_complete();
                     $order->reduce_order_stock();
-                    $order->add_order_note( "Pagamento confirmado por Pixapay.\n Código #" . $fmc_identificador , true );
+                    $order->add_order_note( "Pagamento confirmado por Pixapay.\n Código #" . $fmb_identificador , true );
                 } catch (\Throwable $th) {
                     //throw $th;
                     $this->Create_log('Ocorreu um erro: ' . $th->getMessage() . ' no arquivo ' . $th->getFile() . ' na linha ' . $th->getLine());
@@ -995,24 +997,11 @@ function Pixapay_init()
             }
         }
 
-        public function get_PaymentMethodOrder($data)
-        {
-            if(isset($data->pix)){
-                return 'pix';
-            }elseif(isset($data->boletopix)){
-                return 'boleto';
-            }elseif(isset($data->boleto)){
-                return 'boleto';
-            }elseif(isset($data->cartao)){
-                return 'cartao';
-            }
-        }
 
         public function CreditCartPagar($order_data,$POST)
         {
 
             $args = $this->PayloadCreditCartPagar($order_data,$POST);
-            // var_dump($this->Response);exit;
             $fmc_idpk = $this->Body->fmc_idpk;
              $Response = wp_remote_request( $this->Endpoint . '/Cartao/Pagar/'.$fmc_idpk.'?empresa_idpk=' . $this->idpk, array(
                 'body' => json_encode($args),
